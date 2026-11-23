@@ -3,140 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard de Saldos</title>
+<title>Centro de Saldos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#14213d;--navy2:#1f3160;--bg:#eef2f8;--card:#fff;--ink:#1c2436;--muted:#5d6782;--violet:#6d4aff;--violet2:#5536e0;--amber:#c27c0e;--green:#13915f;--red:#c63d3d;--line:#e1e6f0}
+/* VOICE: centro de control financiero, sobrio y preciso
+   IDEA: consola de monitoreo en vivo (tipo terminal de trading)
+   PICTURE: curva del saldo consolidado con brillo cian
+   COLOUR/TYPE: grafito profundo, cian = saldo, verde = ingresos de clientes, violeta = movimientos propios FM; Space Grotesk + JetBrains Mono para cifras
+   LAYOUT: héroe con curva + KPIs, barras por día, cuentas agrupadas, feed de ingresos */
+:root{--bg:#060a13;--panel:rgba(13,21,37,.78);--panel2:#0b1324;--line:rgba(125,211,252,.13);--ink:#e7eef8;--mut:#8b9bb6;--cy:#22d3ee;--cy2:#0ea5e9;--gr:#34d399;--vi:#a78bfa;--am:#fbbf24;--rd:#f87171;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
-header{background:var(--navy);color:#fff;padding:18px max(4vw,16px);display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px #0003}
-header h1{margin:0;font-size:24px;font-weight:700}
-header .sub{font-size:14px;color:#b9c4e0}
+body{margin:0;color:var(--ink);font:16px/1.5 "Space Grotesk",system-ui,"Segoe UI",sans-serif;overflow-x:clip;min-height:100vh;
+  background:radial-gradient(1100px 520px at 85% -8%,rgba(34,211,238,.13),transparent 60%),radial-gradient(800px 480px at -5% 18%,rgba(167,139,250,.10),transparent 60%),
+  linear-gradient(rgba(125,211,252,.035) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(125,211,252,.035) 1px,transparent 1px) 0 0/44px 44px,var(--bg)}
+header{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;padding:14px max(3vw,16px);background:rgba(6,10,19,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{filter:drop-shadow(0 0 8px rgba(34,211,238,.6))}
+.brand h1{margin:0;font-size:21px;font-weight:700;line-height:1.1}
+.brand small{color:var(--mut);font-size:13px}
 .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.btn{border:0;border-radius:10px;padding:11px 18px;font:600 15px inherit;font-family:inherit;cursor:pointer;min-height:44px;background:var(--violet);color:#fff;transition:background .15s}
-.btn:hover{background:var(--violet2)}.btn:disabled{opacity:.6;cursor:wait}
-.btn.ghost{background:var(--navy2);color:#fff}.btn.ghost:hover{background:#2b4080}
-.btn.light{background:#ece8ff;color:var(--violet2)}
-.btn:focus-visible,input:focus-visible{outline:3px solid #a993ff;outline-offset:2px}
-.pill{background:var(--navy2);border-radius:999px;padding:8px 14px;font-size:14px;white-space:nowrap}
-main{max-width:1240px;margin:0 auto;padding:28px max(4vw,16px) 60px}
-h2{font-size:21px;margin:34px 0 14px}
-.card{background:var(--card);border-radius:16px;padding:22px 24px;box-shadow:0 2px 8px #14213d12}
-.hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:18px}
-.k-l{color:var(--muted);font-size:15px}
-.k-v{font-size:clamp(30px,4.5vw,46px);font-weight:700;line-height:1.1;margin-top:6px;white-space:nowrap}
-.k-s{font-size:22px}
-.k-n{color:var(--muted);font-size:14px;margin-top:6px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
-.bank{position:relative;transition:box-shadow .3s}
-.bank h3{margin:0;font-size:19px;display:flex;justify-content:space-between;gap:8px}
-.bank .saldo{font-size:30px;font-weight:700;margin:10px 0 4px;white-space:nowrap}
-.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px 0}
-.bar i{display:block;height:100%;background:var(--violet);border-radius:9px}
-.meta{font-size:14px;color:var(--muted)}
-.meta b{color:var(--ink);font-weight:600}
-.bank.flash{box-shadow:0 0 0 3px var(--green),0 4px 18px #13915f40}
-.tag{font-size:12px;font-weight:700;background:#dff5ea;color:var(--green);border-radius:6px;padding:2px 8px;white-space:nowrap;align-self:center}
-.tag.warn{background:#fff2dc;color:var(--amber)}
-table{width:100%;border-collapse:collapse;font-size:15px}
-th{text-align:left;color:var(--muted);font-weight:600;border-bottom:2px solid var(--line);padding:10px 8px}
-td{padding:11px 8px;border-bottom:1px solid var(--line)}
-td.n,th.n{text-align:right;white-space:nowrap}
-.pos{color:var(--green);font-weight:600}
-.empty{color:var(--muted);text-align:center;padding:26px}
-.hint{color:var(--amber);font-size:14px;font-weight:500}
-.banner{background:#fff2dc;border-left:5px solid var(--amber);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:15px}
-.banner.err{background:#fde8e8;border-color:var(--red)}
-dialog{border:0;border-radius:18px;padding:0;width:min(560px,94vw);box-shadow:0 20px 60px #0005}
-dialog::backdrop{background:#14213d99}
-.dh{background:var(--navy);color:#fff;padding:18px 24px;font-size:19px;font-weight:700}
-.db{padding:22px 24px;display:grid;gap:16px}
+.live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);padding:0 6px}
+.live i{width:9px;height:9px;border-radius:50%;background:#475569}
+.live.on i{background:var(--gr);box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.ring{display:flex;align-items:center;gap:8px;font:600 14px var(--mono);color:var(--cy);border:1px solid var(--line);border-radius:12px;padding:5px 12px 5px 6px;background:var(--panel2)}
+.ring svg{transform:rotate(-90deg)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:0 18px;min-height:44px;font:700 15px "Space Grotesk",sans-serif;cursor:pointer;color:#03131c;background:linear-gradient(135deg,var(--cy),var(--cy2));box-shadow:0 0 22px rgba(34,211,238,.28);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(34,211,238,.45)}
+.btn:disabled{opacity:.6;cursor:wait}
+.ib{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer}
+.ib:hover{border-color:var(--cy);color:var(--cy)}.ib.on{color:var(--gr);border-color:rgba(52,211,153,.5)}
+.btn:focus-visible,.ib:focus-visible,input:focus-visible,.acc:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+main{max-width:1320px;margin:0 auto;padding:22px max(3vw,16px) 70px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 22px;backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.lbl{color:var(--mut);font-size:14px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.lbl b{color:var(--ink);font-weight:600;font-size:15px}
+.top{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
+.big{font:600 clamp(34px,5.2vw,58px)/1.05 var(--mono);letter-spacing:-.03em;margin:10px 0 4px;white-space:nowrap;text-shadow:0 0 30px rgba(34,211,238,.25)}
+.delta{font:600 14px var(--mono)}.up{color:var(--gr)}.dn{color:var(--rd)}
+.fig{position:relative;height:210px;margin-top:10px}.fig>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.fig.sm{height:190px}
+.stack{display:grid;gap:16px}
+.kpi .v{font:600 30px/1.1 var(--mono);margin-top:8px;white-space:nowrap}
+.kpi small{color:var(--mut);font-size:14px}
+.kpi.g .v{color:var(--gr)}.kpi.p .v{color:var(--vi)}
+.row2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.dist{display:grid;gap:11px;margin-top:14px}
+.dr{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}
+.dr span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dr .tr{height:8px;border-radius:9px;background:rgba(148,163,184,.12);overflow:hidden}
+.dr .tr i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--cy2),var(--cy));box-shadow:0 0 10px rgba(34,211,238,.5)}
+.dr b{font:600 13px var(--mono);white-space:nowrap}
+h2{font-size:22px;margin:36px 0 14px;display:flex;align-items:center;gap:10px}
+h2::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--cy);box-shadow:0 0 12px var(--cy)}
+h2 small,.hint{font-size:14px;font-weight:500;color:var(--am)}
+.grp{margin-bottom:22px}
+.grp-h{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;margin-bottom:12px}
+.grp-h small{color:var(--mut);font-weight:500;font-size:14px}
+.dot{width:12px;height:12px;border-radius:50%}.d1{background:var(--vi);box-shadow:0 0 10px var(--vi)}.d2{background:var(--cy);box-shadow:0 0 10px var(--cy)}.d3{background:#64748b}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.acc{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .3s;position:relative}
+.acc:hover{transform:translateY(-2px);border-color:rgba(34,211,238,.5)}
+.acc .nm{font-weight:700;font-size:16px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.acc .sd{font:600 25px var(--mono);margin:8px 0 2px;white-space:nowrap}
+.acc .sp{display:block;width:100%;height:42px;margin:6px 0}
+.acc .ft{font-size:13px;color:var(--mut);display:grid;gap:2px}
+.acc .ft b{color:var(--ink);font-weight:600}
+.acc .ft .g{color:var(--gr);font-family:var(--mono)}
+.acc.flash{border-color:var(--gr);box-shadow:0 0 0 1px var(--gr),0 0 34px rgba(52,211,153,.35)}
+.acc.ghost{cursor:default;border-style:dashed;background:transparent;color:var(--mut)}
+.acc.ghost:hover{transform:none;border-color:var(--line)}
+.tag{font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap;background:rgba(52,211,153,.14);color:var(--gr);border:1px solid rgba(52,211,153,.35)}
+.tag.fm{background:rgba(167,139,250,.14);color:var(--vi);border-color:rgba(167,139,250,.35)}
+.tag.w{background:rgba(251,191,36,.12);color:var(--am);border-color:rgba(251,191,36,.35)}
+.row3{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;align-items:start}
+.row3 h2{margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--mut);font-weight:500;font-size:13px;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid rgba(125,211,252,.07);vertical-align:top}
+tr:hover td{background:rgba(34,211,238,.035)}
+td small{color:var(--mut);font-size:12.5px;display:block}
+td.t{white-space:nowrap;font-family:var(--mono);font-size:13px}
+.who{font-weight:600}
+.amt{text-align:right;font:600 14px var(--mono);white-space:nowrap;color:var(--gr)}
+th.r{text-align:right}
+tr.fm td{color:var(--mut)}tr.fm .amt{color:var(--vi)}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:7px;padding:2px 8px;white-space:nowrap;color:var(--cy)}
+.empty{color:var(--mut);text-align:center;padding:24px}
+.banner{border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.08);border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:15px}
+.banner.err{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}
+dialog{background:#0a1121;color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:0;box-shadow:0 30px 80px #000a}
+dialog::backdrop{background:rgba(2,6,15,.72);backdrop-filter:blur(4px)}
+#dlg{width:min(580px,94vw)}
+.dh{padding:18px 22px;border-bottom:1px solid var(--line);font-size:19px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.db{padding:20px 22px;display:grid;gap:15px}
+.df{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:0 22px 20px}
+.btn.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
 label{font-weight:600;font-size:15px;display:block;margin-bottom:6px}
-input{width:100%;font:16px inherit;font-family:inherit;padding:11px 13px;border:1.5px solid #cdd5e4;border-radius:10px}
-.df{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:0 24px 22px}
-#toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:20;max-width:min(380px,92vw)}
-.toast{background:var(--navy);color:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 8px 24px #0004;border-left:6px solid var(--green);animation:in .3s ease}
-.toast b{display:block;font-size:16px}
-.clic{cursor:pointer}.clic:hover{box-shadow:0 6px 20px #6d4aff2e}
-.ver{color:var(--violet2);font-weight:600;font-size:14px;margin-top:10px}
-.grp{margin-bottom:24px}.grp-t{font-size:17px;font-weight:700;color:var(--navy2);margin:0 0 12px}
-.cnt{font-size:24px;font-weight:700;margin:8px 0 4px}
-tr.propio td{color:var(--muted)}tr.propio s{color:var(--muted)}
-.tag.fm{background:#ece8ff;color:var(--violet2)}
-#det{width:min(860px,96vw)}#detB{max-height:65vh;overflow:auto}
-@keyframes in{from{transform:translateY(20px);opacity:0}}
+input[type=text],input[type=password],input[type=number],input[type=search]{width:100%;font:16px "Space Grotesk",sans-serif;padding:11px 13px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+#det{margin:0 0 0 auto;width:min(820px,100vw);height:100vh;max-height:100vh;border-radius:0;border-width:0 0 0 1px;display:none;flex-direction:column}
+#det[open]{display:flex;animation:slide .25s ease}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+.dbody{overflow:auto;padding:18px 22px 30px;display:grid;gap:16px;align-content:start}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.st{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--panel2)}
+.st b{display:block;font:600 20px var(--mono);margin-top:2px;white-space:nowrap}
+.st small{color:var(--mut);font-size:13px}
+.ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.ctl input[type=search]{flex:1 1 240px}
+.ctl label{margin:0;font-weight:500;display:flex;gap:8px;align-items:center;color:var(--mut);cursor:pointer}
+.ctl input[type=checkbox]{width:20px;height:20px;accent-color:var(--vi)}
+#toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:30;max-width:min(390px,92vw)}
+.toast{background:#0b1426;border:1px solid rgba(52,211,153,.45);border-radius:14px;padding:13px 16px;box-shadow:0 0 30px rgba(52,211,153,.2),0 10px 30px #0008;animation:slide .3s ease}
+.toast b{display:block;color:var(--gr)}
+.toast span{font-size:14px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media(max-width:820px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero .card:first-child{grid-column:1/-1}}
-@media(max-width:600px){header{position:static}header h1{font-size:20px}.hero{grid-template-columns:minmax(0,1fr)}table{font-size:14px}.hide-m{display:none}}
+@media(max-width:960px){.top,.row2,.row3{grid-template-columns:minmax(0,1fr)}.stack{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){.stack{grid-template-columns:minmax(0,1fr)}.hide-m{display:none}.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.brand h1{font-size:18px}.fig{height:180px}}
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <h1>🏦 Dashboard de Saldos Bancarios</h1>
-    <div class="sub" id="libro">Sin conectar</div>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 30 9.5v15L17 32 4 24.5v-15Z" fill="none" stroke="#22d3ee" stroke-width="2"/><path d="M10 21l4-5 4 3 6-8" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>Centro de Saldos</h1><small id="libro">Sin conectar</small></div>
   </div>
   <div class="acts">
-    <span class="pill" id="ultima">Última: —</span>
-    <span class="pill" id="prox">Próxima: —</span>
-    <button class="btn" id="bRef">🔄 Actualizar ahora</button>
-    <button class="btn ghost" id="bNot">🔔 Activar avisos</button>
-    <button class="btn ghost" id="bCfg" aria-label="Configuración">⚙️</button>
+    <span class="live" id="live"><i></i><span id="ultima">Sin datos</span></span>
+    <span class="ring" title="Próxima actualización automática"><svg width="30" height="30" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(125,211,252,.15)" stroke-width="4"/><circle id="arc" cx="18" cy="18" r="15" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="0"/></svg><span id="prox">--:--</span></span>
+    <button class="btn" id="bRef"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span>Actualizar</span></button>
+    <button class="ib" id="bNot" title="Activar notificaciones" aria-label="Notificaciones"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+    <button class="ib" id="bCfg" title="Configuración" aria-label="Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
   </div>
 </header>
 
 <main>
   <div id="msg"></div>
 
-  <section class="hero">
-    <div class="card"><div class="k-l">💰 Saldo total consolidado</div><div class="k-v" id="total">—</div><div class="k-n" id="totalN"></div></div>
-    <div class="card"><div class="k-l">📥 Ingresos de hoy</div><div class="k-v k-s" id="hoy">—</div><div class="k-n" id="hoyN"></div></div>
-    <div class="card"><div class="k-l">🏦 Bancos</div><div class="k-v k-s" id="nb">—</div><div class="k-n" id="nbN"></div></div>
+  <section class="top">
+    <div class="panel">
+      <div class="lbl"><b>Saldo consolidado</b><span>Últimos 30 días</span></div>
+      <div class="big" id="total">—</div>
+      <div class="delta" id="delta"></div>
+      <div class="fig" id="fTot"><svg></svg></div>
+    </div>
+    <div class="stack">
+      <div class="panel kpi g"><div class="lbl"><b>Ingresos de clientes hoy</b></div><div class="v" id="hoy">—</div><small id="hoyN"></small></div>
+      <div class="panel kpi p"><div class="lbl"><b>Movimientos propios hoy</b><span class="hint">(FM)</span></div><div class="v" id="fm">—</div><small id="fmN"></small></div>
+      <div class="panel kpi"><div class="lbl"><b>Cuentas monitoreadas</b></div><div class="v" id="nb">—</div><small id="nbN"></small></div>
+    </div>
   </section>
 
-  <h2>🏦 Saldos por banco</h2>
-  <div class="grid" id="bancos"><div class="card empty">Conecta tu Google Sheet en ⚙️ Configuración o prueba con datos de ejemplo.</div></div>
+  <section class="row2">
+    <div class="panel"><div class="lbl"><b>Ingresos de clientes por día</b><span>Sin FM · 14 días</span></div><div class="fig sm" id="fIng"><svg></svg></div></div>
+    <div class="panel"><div class="lbl"><b>Distribución del saldo</b><span>Por cuenta</span></div><div class="dist" id="dist"></div></div>
+  </section>
 
-  <h2>🏢 Empresas <span class="hint">(clic en cada una para ver sus ingresos)</span></h2>
-  <div id="empresas"></div>
+  <h2>Cuentas <small>(clic en cada una para ver sus ingresos)</small></h2>
+  <div id="cuentas"><div class="panel empty">Conecta tu Google Sheet en Configuración o prueba con datos de ejemplo.</div></div>
 
-  <h2>📥 Últimos ingresos de clientes</h2>
-  <div class="card" style="padding:8px 14px;overflow-x:auto">
-    <table>
-      <thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead>
-      <tbody id="ingresos"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody>
-    </table>
-  </div>
-
-  <h2>🔁 Movimientos propios <span class="hint">(concepto con FM, no cuentan como ingreso)</span></h2>
-  <div class="card" style="padding:8px 14px;overflow-x:auto">
-    <table>
-      <thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead>
-      <tbody id="propios"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody>
-    </table>
-  </div>
+  <section class="row3">
+    <div><h2>Últimos ingresos de clientes</h2>
+      <div class="panel" style="padding:8px 12px;overflow-x:auto"><table>
+        <thead><tr><th>Fecha</th><th>Ordenante</th><th class="hide-m">Cuenta</th><th class="r">Monto</th></tr></thead>
+        <tbody id="feed"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody></table></div></div>
+    <div><h2>Movimientos propios <small>(FM)</small></h2>
+      <div class="panel" style="padding:8px 12px;overflow-x:auto"><table>
+        <thead><tr><th>Fecha</th><th>Ordenante</th><th class="r">Monto</th></tr></thead>
+        <tbody id="propios"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table></div></div>
+  </section>
 </main>
 
 <dialog id="det">
-  <div class="dh" id="detT"></div>
-  <div class="db" id="detB"></div>
-  <div class="df"><button class="btn" id="detC">Cerrar</button></div>
+  <div class="dh"><div><div id="detT"></div><small id="detS" style="color:var(--mut);font-size:14px;font-weight:500"></small></div><button class="ib" id="detC" aria-label="Cerrar">✕</button></div>
+  <div class="dbody">
+    <div class="stats" id="detStats"></div>
+    <div class="panel" style="padding:14px 16px"><div class="lbl"><b>Ingresos de clientes por día</b><span>30 días</span></div><div class="fig sm" id="fDet"><svg></svg></div></div>
+    <div class="ctl"><input type="search" id="detQ" placeholder="Buscar ordenante, concepto, referencia o clave de rastreo"><label><input type="checkbox" id="detFM" checked> Mostrar FM</label></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Fecha</th><th>Ordenante / Beneficiario</th><th class="hide-m">Referencia</th><th class="r">Monto</th></tr></thead>
+      <tbody id="detTb"></tbody></table></div>
+  </div>
 </dialog>
 
 <dialog id="dlg">
-  <form method="dialog" id="fCfg">
-    <div class="dh">⚙️ Configuración</div>
+  <form id="fCfg">
+    <div class="dh">Configuración</div>
     <div class="db">
-      <div><label for="cUrl">URL de la API <span class="hint">(la de Apps Script que termina en /exec)</span></label><input id="cUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
-      <div><label for="cTok">Token <span class="hint">(la misma clave que pusiste en Code.gs)</span></label><input id="cTok" type="password" autocomplete="off"></div>
-      <div><label for="cMin">Actualizar cada <span class="hint">(minutos)</span></label><input id="cMin" type="number" min="1" value="30"></div>
-      <div><label for="cG1">Empresas grupo 1 <span class="hint">(separadas por coma)</span></label><input id="cG1"></div>
-      <div><label for="cG2">Empresas grupo 2 <span class="hint">(separadas por coma)</span></label><input id="cG2"></div>
-      <div><label for="cIgn">Pestañas a ignorar <span class="hint">(separadas por coma, ej. Resumen, Catálogo)</span></label><input id="cIgn"></div>
+      <div><label for="cUrl">URL de la API <span class="hint">(la de Apps Script que termina en /exec)</span></label><input type="text" id="cUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div><label for="cTok">Token <span class="hint">(la misma clave que pusiste en Code.gs)</span></label><input type="password" id="cTok" autocomplete="off"></div>
+      <div><label for="cMin">Actualizar cada <span class="hint">(minutos)</span></label><input type="number" id="cMin" min="1" value="30"></div>
+      <div><label for="cG1">Empresas grupo 1 <span class="hint">(separadas por coma)</span></label><input type="text" id="cG1"></div>
+      <div><label for="cG2">Empresas grupo 2 <span class="hint">(separadas por coma)</span></label><input type="text" id="cG2"></div>
+      <div><label for="cIgn">Pestañas a ignorar <span class="hint">(separadas por coma)</span></label><input type="text" id="cIgn"></div>
     </div>
     <div class="df">
-      <button type="button" class="btn light" id="bDemo">🧪 Usar datos de ejemplo</button>
-      <button type="button" class="btn ghost" id="bCan">Cancelar</button>
-      <button type="submit" class="btn" id="bSave">💾 Guardar y conectar</button>
+      <button type="button" class="btn sec" id="bDemo">Datos de ejemplo</button>
+      <button type="button" class="btn sec" id="bCan">Cancelar</button>
+      <button type="submit" class="btn">Guardar y conectar</button>
     </div>
   </form>
 </dialog>
@@ -147,20 +212,30 @@ tr.propio td{color:var(--muted)}tr.propio s{color:var(--muted)}
 {
 const $ = id => document.getElementById(id);
 const store = {
-  get(k, d){ try{ const v = localStorage.getItem('dsb_'+k); return v==null ? d : JSON.parse(v) }catch(e){ return d } },
+  get(k, d){ try{ const v = localStorage.getItem('dsb_'+k); return v == null ? d : JSON.parse(v) }catch(e){ return d } },
   set(k, v){ try{ localStorage.setItem('dsb_'+k, JSON.stringify(v)) }catch(e){} }
 };
 let cfg = Object.assign({url:'', token:'', min:30, ignorar:'', demo:false,
   g1:'EQUITED, KUBERGANYA, GRAVANTA, BESTEN, NORDELTA, HANGREVERS, NIGRI',
   g2:'Zentigro, Food max, Qaersors, Samury, Trouapou'}, store.get('cfg', {}));
-let ultimosIng = [], ultimosBancos = [];
-let estadoPrev = store.get('estado', null);   // {banco:{ultFila, saldo}}
-let siguiente = 0, cargando = false, nuevosVistos = store.get('nuevos', []);
+let estadoPrev = store.get('estado', null), nuevosVistos = store.get('nuevos', []);
+let siguiente = 0, cargando = false, CUENTAS = [], actual = null;
 
+// ---------- utilidades ----------
 const MXN = new Intl.NumberFormat('es-MX', {style:'currency', currency:'MXN'});
 const fmt = n => MXN.format(n || 0);
+const fmtK = n => { const a = Math.abs(n); return a >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M' : a >= 1e3 ? '$' + (n/1e3).toFixed(1) + 'k' : '$' + Math.round(n) };
 const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clave = s => norm(s).replace(/[^a-z0-9]/g,'');
+const lista = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+const pad = n => String(n).padStart(2,'0');
+const MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fCorta = d => d ? pad(d.getDate()) + ' ' + MES[d.getMonth()] : '—';
+const dKey = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+const mismoDia = (a, b) => a && dKey(a) === dKey(b);
+const esPropio = s => /fm/i.test(String(s ?? ''));
+const esNuevo = m => nuevosVistos.includes(m.cuenta + '|' + m.fila);
 function num(v){
   if (typeof v === 'number') return v;
   let s = String(v ?? '').trim(); if (!s) return NaN;
@@ -171,214 +246,297 @@ function num(v){
 }
 function fecha(v){
   if (!v) return null;
-  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return new Date(v);
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) { const [y,m,d] = v.slice(0,10).split('-'); return new Date(+y, m-1, +d); }
   const m = String(v).match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
-  if (m) return new Date(+(m[3].length===2?'20'+m[3]:m[3]), m[2]-1, +m[1]);
-  return null;
+  return m ? new Date(+(m[3].length === 2 ? '20' + m[3] : m[3]), m[2]-1, +m[1]) : null;
 }
-const fFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-const mismoDia = (a,b) => a && a.toDateString() === b.toDateString();
-const clave = s => norm(s).replace(/[^a-z0-9]/g,'');
-const lista = s => String(s||'').split(',').map(x => x.trim()).filter(Boolean);
-const empresas = () => [...lista(cfg.g1), ...lista(cfg.g2)];
-// Una empresa "coincide" si su nombre aparece en el nombre de la pestaña o en el concepto
-const coincide = (emp, i) => (clave(i.banco) + '|' + clave(i.concepto)).includes(clave(emp));
-const esPropio = concepto => /fm/i.test(String(concepto ?? ''));
-const ord = (a,b) => (b.fecha||0) - (a.fecha||0) || b.fila - a.fila;
+function hora(v){
+  if (v == null || v === '') return '';
+  if (typeof v === 'number' && v < 1){ const t = Math.round(v*1440); return pad(Math.floor(t/60)) + ':' + pad(t%60); }
+  const m = String(v).match(/(\d{1,2}):(\d{2})/); return m ? pad(m[1]) + ':' + m[2] : '';
+}
 
-// ---------- Lectura flexible de cada pestaña ----------
-const PAT = {
-  saldo:/saldo/, ingreso:/ingreso|abono|deposito|entrada|credito|haber/, egreso:/egreso|cargo|retiro|salida|debito|debe|pago/,
-  monto:/^(monto|importe|cantidad)/, fecha:/fecha|dia/, concepto:/concepto|descripcion|detalle|referencia|movimiento|cliente/
-};
+// ---------- lectura de cada pestaña ----------
+// Estructura: # | Fecha | Hora | Ordenante/Beneficiario | Banco | CLABE/TDD | Clave de Rastreo | Descripción | Referencia | Montos Recibidos | Montos Enviados | Saldo
+const COLS = [['fecha',/^fecha/],['hora',/^hora/],['ordenante',/ordenante|beneficiario/],['bancoCp',/^banco$/],['clabe',/clabe|tdd/],['rastreo',/rastreo/],
+  ['desc',/descripcion|concepto|detalle/],['ref',/referencia/],['recibido',/recibid|ingreso|abono|deposito/],['enviado',/enviad|egreso|cargo|retiro/],['monto',/^(monto|importe)/],['saldo',/^saldo/]];
 function analizar(nombre, filas){
   let h = -1, col = {};
   for (let i = 0; i < Math.min(filas.length, 15); i++){
     const c = {};
     filas[i].forEach((x, j) => { const t = norm(x); if (!t || t.length > 40) return;
-      for (const k in PAT) if (c[k] == null && PAT[k].test(t) && !(k==='ingreso' && /saldo/.test(t))) { c[k] = j; break; } });
-    if (c.saldo != null || c.ingreso != null || c.monto != null){ h = i; col = c; break; }
+      for (const [k, re] of COLS) if (c[k] == null && re.test(t)) { c[k] = j; break; } });
+    if (c.saldo != null || c.recibido != null || c.monto != null){ h = i; col = c; break; }
   }
-  const datos = h < 0 ? [] : filas.slice(h+1).map((r,i)=>({r, fila:h+2+i})).filter(o => o.r.some(x => String(x).trim() !== ''));
-  let saldo = NaN, ingresos = [], ultimo = null;
-  datos.forEach(({r, fila}) => {
-    let mi = col.ingreso != null ? num(r[col.ingreso]) : NaN;
-    if (col.ingreso == null && col.monto != null){ const m = num(r[col.monto]); if (m > 0) mi = m; }
-    const me = col.egreso != null ? num(r[col.egreso]) : NaN;
-    const f = col.fecha != null ? fecha(r[col.fecha]) : null;
-    const concepto = col.concepto != null ? r[col.concepto] : '';
-    if (col.saldo != null && isFinite(num(r[col.saldo]))) saldo = num(r[col.saldo]);
-    if (mi > 0) ingresos.push({banco:nombre, fila, monto:mi, fecha:f, concepto, propio: esPropio(concepto)});
-    if (mi > 0 || me > 0) ultimo = {tipo: mi > 0 ? 'Ingreso' : 'Egreso', monto: mi > 0 ? mi : me, fecha:f};
-  });
-  if (!isFinite(saldo) && col.saldo == null){
-    if (col.ingreso != null || col.monto != null) saldo = datos.reduce((s,{r}) => s + (col.ingreso!=null ? (num(r[col.ingreso])||0) - (col.egreso!=null ? num(r[col.egreso])||0 : 0) : (num(r[col.monto])||0)), 0);
-    else for (const r of filas) { const j = r.findIndex(x => /saldo/.test(norm(x))); if (j >= 0){ const v = r.slice(j+1).map(num).find(isFinite); if (v != null){ saldo = v; break; } } }
+  const g = (r, k) => col[k] != null ? r[col[k]] : '';
+  const txt = (r, k) => String(g(r, k) ?? '').trim();
+  const movs = [];
+  if (h >= 0) for (let i = h + 1; i < filas.length; i++){
+    const r = filas[i];
+    if (norm(g(r,'fecha')) === 'fecha') continue;            // encabezado repetido (otro mes)
+    let rec = num(g(r,'recibido')), env = num(g(r,'enviado')); const sal = num(g(r,'saldo'));
+    if (col.recibido == null && col.monto != null){ const m = num(g(r,'monto')); if (m > 0) rec = m; else if (m < 0) env = -m; }
+    if (!(rec > 0) && !(env > 0) && !isFinite(sal)) continue;  // filas de título o vacías
+    const f = fecha(g(r,'fecha')), hh = hora(g(r,'hora')), desc = txt(r,'desc');
+    let ts = f ? f.getTime() : 0; if (f && hh){ const [a,b] = hh.split(':'); ts += (+a*60 + +b) * 60000; }
+    movs.push({cuenta:nombre, fila:i+1, ts, fecha:f, hora:hh, ordenante:txt(r,'ordenante'), bancoCp:txt(r,'bancoCp'), rastreo:txt(r,'rastreo'),
+      ref:txt(r,'ref'), desc, saldo:sal, tipo: rec > 0 ? 'in' : env > 0 ? 'out' : '', monto: rec > 0 ? rec : env > 0 ? env : 0, propio: rec > 0 && esPropio(desc)});
   }
-  return {nombre, saldo, ingresos, ultimo, ultFila: datos.length ? datos[datos.length-1].fila : 0, valido: isFinite(saldo), sinIngresos: col.ingreso == null && col.monto == null};
+  movs.sort((a,b) => a.ts - b.ts || a.fila - b.fila);
+  let saldo = NaN; const serie = {};
+  movs.forEach(m => { if (isFinite(m.saldo)){ saldo = m.saldo; if (m.fecha) serie[dKey(m.fecha)] = m.saldo; } });
+  if (!isFinite(saldo) && col.saldo == null && movs.length) saldo = movs.reduce((s,m) => s + (m.tipo === 'in' ? m.monto : -m.monto), 0);
+  const ingresos = movs.filter(m => m.tipo === 'in');
+  return {nombre, saldo, movs, ingresos, serie, valido: isFinite(saldo), ultFila: movs.reduce((x,m) => Math.max(x, m.fila), 0),
+    ultIng: ingresos.filter(m => !m.propio).pop() || null};
 }
 
-// ---------- Datos de ejemplo ----------
-let demo = null;
+// ---------- datos de ejemplo (ficticios) ----------
+let demo = null, seed = 11;
+const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+const ORD = ['COMERCIALIZADORA DEL BAJIO SA DE CV','LOGISTICA OCCIDENTE SA DE CV','GRUPO ALTAMIRA INDUSTRIAL','SERVICIOS INTEGRALES DE JALISCO','TRANSPORTES DEL NORTE SA','DISTRIBUIDORA PACIFICO','CONSTRUCTORA VALLARTA'];
+const BAN = ['BBVA MEXICO','BANORTE','SANTANDER','BANREGIO','HSBC'];
+function filaDemo(n, d, rec, env, saldo, propio){
+  const desc = propio ? 'FM11-' + (100 + Math.floor(rnd()*20)) + '-107' : ['PAGO','sin concepto','FACTURA ' + (1700 + Math.floor(rnd()*99)) + ' SERVICIOS','ANTICIPO'][Math.floor(rnd()*4)];
+  return [n, dKey(d) + 'T00:00:00', pad(8 + Math.floor(rnd()*10)) + ':' + pad(Math.floor(rnd()*60)) + ':00', propio ? 'SERCORP CONCENTRADORA' : ORD[Math.floor(rnd()*ORD.length)],
+    BAN[Math.floor(rnd()*BAN.length)], '0123' + Math.floor(rnd()*1e8), 'MBAN' + Math.floor(rnd()*1e10), desc, String(Math.floor(rnd()*1e6)), rec || '', env || '', saldo];
+}
 function datosDemo(){
   if (!demo){
-    const hoy = new Date(), d = n => { const x = new Date(hoy); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10)+'T10:00:00' };
-    const mk = (s0, movs) => { let s = s0; const f = [['Fecha','Concepto','Ingreso','Egreso','Saldo']]; movs.forEach(([dd,c,i,e]) => { s += i - e; f.push([d(dd),c,i||'',e||'',s]) }); return f };
-    demo = [
-      {nombre:'BBVA', filas: mk(420000, [[3,'SPEI EQUITED SA DE CV',85000,0],[2,'Nómina',0,120000],[1,'TRASPASO FM KUBERGANYA',46500,0],[0,'Pago proveedor',0,18200]])},
-      {nombre:'Banorte', filas: mk(185000, [[4,'Depósito GRAVANTA',32000,0],[2,'Comisión',0,350],[0,'Cobro factura ZENTIGRO',57800,0]])},
-      {nombre:'Santander', filas: mk(96000, [[5,'Renta oficina',0,28000],[2,'FM TRASPASO EQUITED',20000,0],[1,'Abono FOOD MAX',15400,0]])},
-      {nombre:'Banregio', filas: mk(310500, [[3,'SPEI NORDELTA',40000,0],[2,'Pago impuestos',0,64000],[0,'Pago servicios SAMURY',92300,0]])}
-    ];
-  } else if (Math.random() < .7){
-    const cs = ['SPEI EQUITED','DEPOSITO QAERSORS','TRASPASO FM BESTEN','PAGO TROUAPOU','SPEI HANGREVERS','ABONO NIGRI'];
-    const b = demo[Math.floor(Math.random()*demo.length)], u = b.filas[b.filas.length-1], m = Math.round(5000 + Math.random()*60000);
-    b.filas.push([new Date().toISOString().slice(0,19), cs[Math.floor(Math.random()*cs.length)], m, '', u[4] + m]);
+    const nombres = ['EQUITED BBVA','KUBERGANYA','GRAVANTA','NORDELTA','HANGREVERS','ZENTIGRO','FOOD MAX','SAMURY','TROUAPOU P2414','OPERADORA CENTRAL'];
+    demo = nombres.map(nombre => {
+      let s = 80000 + rnd()*400000, n = 0; const f = [['NOVIEMBRE'], ['#','Fecha','Hora','Ordenante/Beneficiario','Banco','CLABE/TDD','Clave de Rastreo','Descripción','Referencia','Montos Recibidos','Montos Enviados','Saldo']];
+      for (let k = 34; k >= 0; k--){ const d = new Date(); d.setDate(d.getDate() - k);
+        const veces = Math.floor(rnd()*3);
+        for (let v = 0; v < veces; v++){
+          const tipo = rnd();
+          if (tipo < .55){ const m = Math.round(5000 + rnd()*90000); s += m; f.push(filaDemo(++n, d, m, 0, +s.toFixed(2), false)); }
+          else if (tipo < .68){ const m = Math.round(20000 + rnd()*60000); s += m; f.push(filaDemo(++n, d, m, 0, +s.toFixed(2), true)); }
+          else { const m = Math.round(4000 + rnd()*Math.min(80000, s*.3)); s -= m; f.push(filaDemo(++n, d, 0, m, +s.toFixed(2), false)); }
+        } }
+      return {nombre, filas: f};
+    });
+  } else if (Math.random() < .75){
+    const b = demo[Math.floor(Math.random()*demo.length)], u = b.filas[b.filas.length-1], m = Math.round(5000 + Math.random()*70000), p = Math.random() < .25;
+    b.filas.push(filaDemo((+u[0]||0) + 1, new Date(), m, 0, +(num(u[11]) + m).toFixed(2), p));
+    b.filas[b.filas.length-1][2] = pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()) + ':00';
   }
-  return {libro:'Ejemplo (datos ficticios)', bancas: JSON.parse(JSON.stringify(demo))};
+  return {libro:'Datos de ejemplo (ficticios)', bancas: JSON.parse(JSON.stringify(demo))};
 }
 
-// ---------- Carga ----------
-async function cargar(manual){
-  if (cargando) return; cargando = true; $('bRef').disabled = true; $('bRef').textContent = '⏳ Actualizando…';
+// ---------- carga ----------
+async function cargar(){
+  if (cargando) return; cargando = true; $('bRef').disabled = true; $('bRef').lastElementChild.textContent = 'Actualizando…';
   try{
     let data;
     if (cfg.demo) data = datosDemo();
     else {
-      if (!cfg.url) { aviso('Falta conectar tu Google Sheet. Abre ⚙️ Configuración.'); return; }
-      const r = await fetch(cfg.url + (cfg.url.includes('?')?'&':'?') + 'token=' + encodeURIComponent(cfg.token) + '&t=' + Date.now());
-      data = await r.json();
-      if (data.error) throw new Error(data.error);
+      if (!cfg.url){ aviso('Falta conectar tu Google Sheet. Abre Configuración (engrane).'); return; }
+      const r = await fetch(cfg.url + (cfg.url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(cfg.token) + '&t=' + Date.now());
+      data = await r.json(); if (data.error) throw new Error(data.error);
     }
-    const ign = cfg.ignorar.split(',').map(norm).filter(Boolean);
-    const bancos = data.bancas.filter(b => !ign.includes(norm(b.nombre))).map(b => analizar(b.nombre, b.filas));
-    detectarNuevos(bancos);
-    pintar(bancos, data.libro);
-    $('msg').innerHTML = cfg.demo ? '<div class="banner">🧪 Estás viendo <b>datos de ejemplo</b>. Cada actualización puede simular un ingreso nuevo para que veas el aviso.</div>' : '';
-    $('ultima').textContent = 'Última: ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const ign = lista(cfg.ignorar).map(norm);
+    CUENTAS = data.bancas.filter(b => !ign.includes(norm(b.nombre))).map(b => analizar(b.nombre, b.filas));
+    detectarNuevos(CUENTAS);
+    pintar(data.libro);
+    $('msg').innerHTML = cfg.demo ? '<div class="banner">Estás viendo <b>datos de ejemplo</b> ficticios. Cada actualización puede simular un ingreso nuevo para que veas el aviso.</div>' : '';
+    $('live').classList.add('on'); $('ultima').textContent = 'En vivo · ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    if (actual && $('det').open) abrirDetalle(actual);
   } catch(e){
+    $('live').classList.remove('on'); $('ultima').textContent = 'Sin conexión';
     aviso('No se pudo leer el Sheet: ' + esc(e.message) + '. Revisa la URL, el token y que la implementación tenga acceso “Cualquier usuario”.', true);
   } finally {
-    cargando = false; $('bRef').disabled = false; $('bRef').textContent = '🔄 Actualizar ahora';
+    cargando = false; $('bRef').disabled = false; $('bRef').lastElementChild.textContent = 'Actualizar';
     siguiente = Date.now() + Math.max(1, +cfg.min || 30) * 60000;
   }
 }
-function aviso(t, err){ $('msg').innerHTML = `<div class="banner ${err?'err':''}">${t}</div>` }
+function aviso(t, err){ $('msg').innerHTML = `<div class="banner ${err ? 'err' : ''}">${t}</div>` }
 
-function detectarNuevos(bancos){
+function detectarNuevos(cuentas){
   const nuevo = {};
-  bancos.forEach(b => {
-    nuevo[b.nombre] = {ultFila: b.ultFila, saldo: b.saldo};
-    const p = estadoPrev && estadoPrev[b.nombre];
-    if (!p) return;                       // primera vez: no avisar
-    const todosNuevos = b.ingresos.filter(i => i.fila > p.ultFila);
-    todosNuevos.forEach(i => nuevosVistos.push(b.nombre+'|'+i.fila));
-    const nuevos = todosNuevos.filter(i => !i.propio);   // los FM no avisan
-    nuevos.forEach(i => { const emp = empresas().find(e => coincide(e, i));
-      notificar(`💵 Nuevo ingreso${emp ? ' · ' + emp : ''} en ${b.nombre}`, `${fmt(i.monto)}${i.concepto ? ' · ' + i.concepto : ''}`); });
-    if (b.sinIngresos && isFinite(p.saldo) && b.saldo > p.saldo) notificar(`📈 Subió el saldo de ${b.nombre}`, `+${fmt(b.saldo - p.saldo)} · ahora ${fmt(b.saldo)}`);
-    if (nuevos.length || (b.sinIngresos && b.saldo > p.saldo)) b.flash = true;
+  cuentas.forEach(c => {
+    nuevo[c.nombre] = {ultFila: c.ultFila, saldo: c.saldo};
+    const p = estadoPrev && estadoPrev[c.nombre]; if (!p) return;   // primera lectura: no avisar
+    const llegados = c.ingresos.filter(m => m.fila > p.ultFila);
+    llegados.forEach(m => nuevosVistos.push(c.nombre + '|' + m.fila));
+    const clientes = llegados.filter(m => !m.propio);               // los FM no avisan
+    clientes.forEach(m => notificar(`Nuevo ingreso · ${c.nombre}`, `${fmt(m.monto)} de ${m.ordenante || 'ordenante sin nombre'}${m.desc ? ' · ' + m.desc : ''}`));
+    if (clientes.length) c.flash = true;
   });
   estadoPrev = nuevo; store.set('estado', nuevo);
-  nuevosVistos = nuevosVistos.slice(-30); store.set('nuevos', nuevosVistos);
+  nuevosVistos = nuevosVistos.slice(-60); store.set('nuevos', nuevosVistos);
 }
 
-function pintar(bancos, libro){
-  const ok = bancos.filter(b => b.valido), malos = bancos.filter(b => !b.valido);
-  const total = ok.reduce((s,b) => s + b.saldo, 0), hoy = new Date();
-  const todos = bancos.flatMap(b => b.ingresos).sort(ord);
-  const clientes = todos.filter(i => !i.propio), propios = todos.filter(i => i.propio);
-  const deHoy = clientes.filter(i => mismoDia(i.fecha, hoy)), fmHoy = propios.filter(i => mismoDia(i.fecha, hoy));
-  ultimosIng = todos; ultimosBancos = ok;
+// ---------- gráficas ----------
+function chart(id, pts, tipo, color){
+  const el = $(id), s = el.querySelector('svg');
+  el._draw = () => {
+    const W = el.clientWidth, H = el.clientHeight; if (!W || !pts.length){ s.innerHTML = ''; return; }
+    const angosto = W < 520, L = 4, R = angosto ? 8 : 70, T = 12, B = 24, n = pts.length;
+    const vs = pts.map(p => p.v); let mn = tipo === 'bar' ? 0 : Math.min(...vs), mx = Math.max(...vs, tipo === 'bar' ? 1 : -Infinity);
+    if (mn === mx){ mn -= 1; mx += 1; } if (tipo !== 'bar'){ const pd = (mx - mn) * .15; mn -= pd; mx += pd; } else mx *= 1.1;
+    const iw = W - L - R, ih = H - T - B;
+    const x = i => tipo === 'bar' ? L + iw * (i + .5) / n : L + iw * (n === 1 ? .5 : i / (n - 1)), y = v => T + ih * (1 - (v - mn) / (mx - mn));
+    let out = `<defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".38"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient>
+      <filter id="b${id}"><feGaussianBlur stdDeviation="3"/></filter></defs>`;
+    [0, .5, 1].forEach(f => { const v = mn + (mx - mn) * (1 - f), yy = T + ih * f;
+      out += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="rgba(125,211,252,.09)" stroke-dasharray="3 5"/>`;
+      if (!angosto) out += `<text x="${W - R + 8}" y="${yy + 4}" fill="#8b9bb6" font-size="11" font-family="JetBrains Mono, monospace">${fmtK(v)}</text>`; });
+    if (tipo === 'bar'){
+      const bw = Math.max(3, iw / n * .6);
+      pts.forEach((p, i) => { const yy = y(p.v); out += `<rect x="${x(i) - bw/2}" y="${yy}" width="${bw}" height="${Math.max(0, T + ih - yy)}" rx="3" fill="${color}" opacity="${p.v ? .9 : .25}"/>`;
+        if (!angosto || i % 3 === 0) out += `<text x="${x(i)}" y="${H - 6}" fill="#8b9bb6" font-size="11" text-anchor="middle" font-family="JetBrains Mono, monospace">${p.d.getDate()}</text>`; });
+    } else {
+      const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.v).toFixed(1)).join('');
+      out += `<path d="${d}L${x(n-1)},${T+ih}L${x(0)},${T+ih}Z" fill="url(#g${id})"/><path d="${d}" fill="none" stroke="${color}" stroke-width="5" opacity=".45" filter="url(#b${id})"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2.2"/>`;
+      [0, Math.floor((n-1)/2), n-1].forEach((i, k) => out += `<text x="${x(i)}" y="${H - 6}" fill="#8b9bb6" font-size="11" font-family="JetBrains Mono, monospace" text-anchor="${['start','middle','end'][k]}">${fCorta(pts[i].d)}</text>`);
+      out += `<circle cx="${x(n-1)}" cy="${y(vs[n-1])}" r="4.5" fill="${color}"/><circle cx="${x(n-1)}" cy="${y(vs[n-1])}" r="9" fill="${color}" opacity=".25"/>`;
+    }
+    out += `<g id="h${id}"></g><rect x="${L}" y="0" width="${iw}" height="${H}" fill="transparent" id="o${id}"/>`;
+    s.innerHTML = out;
+    const hv = s.querySelector('#h' + id);
+    s.querySelector('#o' + id).onpointermove = e => {
+      const r = s.getBoundingClientRect(), px = e.clientX - r.left;
+      const i = Math.max(0, Math.min(n - 1, tipo === 'bar' ? Math.floor((px - L) / iw * n) : Math.round((px - L) / iw * (n - 1))));
+      const p = pts[i], xx = x(i), yy = y(p.v), t1 = fmt(p.v), t2 = fCorta(p.d) + (p.c != null ? ` · ${p.c} mov.` : ''), bw = Math.max(t1.length, t2.length) * 7.4 + 20;
+      const bx = Math.min(Math.max(xx - bw/2, 0), W - bw), by = Math.max(yy - 58, 0);
+      hv.innerHTML = `<line x1="${xx}" x2="${xx}" y1="${T}" y2="${T+ih}" stroke="${color}" stroke-opacity=".5"/><circle cx="${xx}" cy="${yy}" r="5" fill="#060a13" stroke="${color}" stroke-width="2"/>
+        <rect x="${bx}" y="${by}" width="${bw}" height="46" rx="9" fill="#0b1426" stroke="${color}" stroke-opacity=".6"/>
+        <text x="${bx + 10}" y="${by + 20}" fill="#e7eef8" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">${t1}</text><text x="${bx + 10}" y="${by + 37}" fill="#8b9bb6" font-size="11.5" font-family="Space Grotesk, sans-serif">${t2}</text>`;
+    };
+    s.querySelector('#o' + id).onpointerleave = () => hv.innerHTML = '';
+  };
+  if (!el._ro){ el._ro = new ResizeObserver(() => el._draw && el._draw()); el._ro.observe(el); }
+  el._draw();
+}
+const dias = n => Array.from({length:n}, (_, i) => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - (n - 1 - i)); return d; });
+function consolidado(cuentas, n){
+  const ds = dias(n);
+  return ds.map(d => { const k = dKey(d); let v = 0;
+    cuentas.forEach(c => { const ks = Object.keys(c.serie).sort(); if (!ks.length){ v += c.saldo || 0; return; }
+      let val = c.serie[ks[0]]; for (const kk of ks){ if (kk <= k) val = c.serie[kk]; else break; } v += val; });
+    return {d, v}; });
+}
+function porDia(movs, n){
+  const m = {}, c = {}; movs.forEach(x => { if (x.fecha){ const k = dKey(x.fecha); m[k] = (m[k] || 0) + x.monto; c[k] = (c[k] || 0) + 1; } });
+  return dias(n).map(d => ({d, v: m[dKey(d)] || 0, c: c[dKey(d)] || 0}));
+}
+function spark(c){
+  const ks = Object.keys(c.serie).sort().slice(-30); if (ks.length < 2) return '<svg class="sp"></svg>';
+  const vs = ks.map(k => c.serie[k]), mn = Math.min(...vs), mx = Math.max(...vs) || 1, r = mx - mn || 1;
+  const p = vs.map((v, i) => `${(i / (vs.length - 1) * 100).toFixed(2)},${(28 - (v - mn) / r * 24).toFixed(2)}`).join(' ');
+  const col = vs[vs.length-1] >= vs[0] ? '#22d3ee' : '#f87171';
+  return `<svg class="sp" viewBox="0 0 100 30" preserveAspectRatio="none"><polygon points="0,30 ${p} 100,30" fill="${col}" opacity=".12"/><polyline points="${p}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+// ---------- render ----------
+function pintar(libro){
+  const ok = CUENTAS.filter(c => c.valido), hoy = new Date();
+  const todos = CUENTAS.flatMap(c => c.ingresos).sort((a,b) => b.ts - a.ts || b.fila - a.fila);
+  const clientes = todos.filter(m => !m.propio), propios = todos.filter(m => m.propio);
+  const cliHoy = clientes.filter(m => mismoDia(m.fecha, hoy)), fmHoy = propios.filter(m => mismoDia(m.fecha, hoy));
+  const total = ok.reduce((s, c) => s + c.saldo, 0);
   $('libro').textContent = libro || 'Google Sheet';
   $('total').textContent = fmt(total);
-  $('totalN').textContent = `Suma de ${ok.length} banco${ok.length===1?'':'s'}`;
-  $('hoy').textContent = fmt(deHoy.reduce((s,i) => s + i.monto, 0));
-  $('hoyN').textContent = `${deHoy.length} ingreso${deHoy.length===1?'':'s'} de clientes` + (fmHoy.length ? ` · ${fmHoy.length} propio${fmHoy.length===1?'':'s'} (FM) excluido${fmHoy.length===1?'':'s'}` : '');
+  const serie = consolidado(ok, 30), ayer = serie.length > 1 ? serie[serie.length - 2].v : total, dif = total - ayer;
+  $('delta').innerHTML = `<span class="${dif >= 0 ? 'up' : 'dn'}">${dif >= 0 ? '▲' : '▼'} ${fmt(Math.abs(dif))}</span> <span style="color:var(--mut)">vs. cierre de ayer</span>`;
+  chart('fTot', serie, 'line', '#22d3ee');
+  $('hoy').textContent = fmt(cliHoy.reduce((s, m) => s + m.monto, 0));
+  $('hoyN').textContent = `${cliHoy.length} ingreso${cliHoy.length === 1 ? '' : 's'} de clientes`;
+  $('fm').textContent = fmt(fmHoy.reduce((s, m) => s + m.monto, 0));
+  $('fmN').textContent = `${fmHoy.length} movimiento${fmHoy.length === 1 ? '' : 's'} excluido${fmHoy.length === 1 ? '' : 's'} de ingresos`;
   $('nb').textContent = ok.length;
-  $('nbN').textContent = malos.length ? `${malos.length} pestaña(s) sin columna de saldo` : 'Todas las pestañas leídas';
-  const max = Math.max(...ok.map(b => Math.abs(b.saldo)), 1);
-  $('bancos').innerHTML = ok.length ? ok.sort((a,b) => b.saldo - a.saldo).map(b => `
-    <div class="card bank clic ${b.flash?'flash':''}" data-banco="${esc(b.nombre)}" tabindex="0">
-      <h3><span>${esc(b.nombre)}</span>${b.flash?'<span class="tag">Nuevo ingreso</span>':''}</h3>
-      <div class="saldo" style="color:${b.saldo<0?'var(--red)':'inherit'}">${fmt(b.saldo)}</div>
-      <div class="meta">${total ? (b.saldo/total*100).toFixed(1) : 0}% del total</div>
-      <div class="bar"><i style="width:${Math.max(2, Math.abs(b.saldo)/max*100)}%"></i></div>
-      <div class="meta">${b.ultimo ? `Último movimiento: <b>${b.ultimo.tipo} ${fmt(b.ultimo.monto)}</b> · ${fFecha(b.ultimo.fecha)}` : 'Sin movimientos detectados'}</div>
-      <div class="ver">Ver ingresos →</div>
-    </div>`).join('') + malos.map(b => `<div class="card bank"><h3><span>${esc(b.nombre)}</span><span class="tag warn">Revisar</span></h3><div class="meta" style="margin-top:10px">No encontré una columna o celda llamada “Saldo”. Agrégala o ignora esta pestaña en ⚙️.</div></div>`).join('')
-    : '<div class="card empty">No se encontraron bancos con saldo.</div>';
-  setTimeout(() => document.querySelectorAll('.bank.flash').forEach(e => e.classList.remove('flash')), 12000);
-  $('ingresos').innerHTML = clientes.length ? clientes.slice(0, 15).map(fila).join('')
-    : '<tr><td colspan="4" class="empty">No hay ingresos de clientes</td></tr>';
-  $('propios').innerHTML = propios.length ? propios.slice(0, 10).map(fila).join('')
-    : '<tr><td colspan="4" class="empty">No hay movimientos con FM</td></tr>';
+  const malos = CUENTAS.length - ok.length;
+  $('nbN').textContent = malos ? `${malos} pestaña${malos === 1 ? '' : 's'} por revisar` : 'Todas las pestañas leídas';
+  chart('fIng', porDia(clientes, 14), 'bar', '#34d399');
+  const top = [...ok].sort((a,b) => b.saldo - a.saldo), mxS = Math.max(...top.map(c => Math.abs(c.saldo)), 1);
+  $('dist').innerHTML = top.slice(0, 10).map(c => `<div class="dr"><span title="${esc(c.nombre)}">${esc(c.nombre)}</span><span class="tr"><i style="width:${Math.max(2, Math.abs(c.saldo) / mxS * 100)}%"></i></span><b>${fmtK(c.saldo)}</b></div>`).join('')
+    + (top.length > 10 ? `<small style="color:var(--mut)">+${top.length - 10} cuentas más abajo</small>` : '') || '<div class="empty">Sin cuentas</div>';
 
-  // Empresas agrupadas (solo visual: no se suman entre sí)
-  const tarjeta = emp => {
-    const suyos = todos.filter(i => coincide(emp, i)), cl = suyos.filter(i => !i.propio), pr = suyos.length - cl.length;
-    const nuevo = cl.some(i => nuevosVistos.includes(i.banco+'|'+i.fila)), u = cl[0];
-    const cuentas = ok.filter(b => clave(b.nombre).includes(clave(emp)));
-    return `<div class="card bank clic" data-emp="${esc(emp)}" tabindex="0">
-      <h3><span>${esc(emp)}</span>${nuevo?'<span class="tag">Nuevo ingreso</span>':''}</h3>
-      <div class="cnt">${cl.length} ingreso${cl.length===1?'':'s'}</div>
-      <div class="meta">${u ? `Último: <b>${fmt(u.monto)}</b> · ${fFecha(u.fecha)} · ${esc(u.banco)}` : 'Sin ingresos de clientes'}</div>
-      ${pr ? `<div class="meta">${pr} movimiento${pr===1?'':'s'} propio${pr===1?'':'s'} (FM)</div>` : ''}
-      ${cuentas.map(b => `<div class="meta">Saldo ${esc(b.nombre)}: <b>${fmt(b.saldo)}</b></div>`).join('')}
-      <div class="ver">Ver ingresos →</div></div>`;
+  // cuentas agrupadas (solo visual, no se suman)
+  const usadas = new Set();
+  const grupo = (titulo, cls, emps) => {
+    if (!emps.length) return '';
+    const cards = emps.map(e => { const cs = CUENTAS.filter(c => clave(c.nombre).includes(clave(e))); cs.forEach(c => usadas.add(c.nombre));
+      return cs.length ? cs.map(tarjeta).join('') : `<div class="acc ghost"><div class="nm">${esc(e)}</div><div class="ft" style="margin-top:8px">No encontré una pestaña con este nombre</div></div>`; }).join('');
+    return `<section class="grp"><div class="grp-h"><span class="dot ${cls}"></span>${titulo}<small>${emps.length} empresa${emps.length === 1 ? '' : 's'}</small></div><div class="grid">${cards}</div></section>`;
   };
-  $('empresas').innerHTML = [['🟣 Grupo 1', lista(cfg.g1)], ['🔵 Grupo 2', lista(cfg.g2)]].filter(g => g[1].length)
-    .map(([t, l]) => `<div class="grp"><div class="grp-t">${t}</div><div class="grid">${l.map(tarjeta).join('')}</div></div>`).join('')
-    || '<div class="card empty">Agrega empresas en ⚙️ Configuración.</div>';
+  let html = grupo('Grupo 1', 'd1', lista(cfg.g1)) + grupo('Grupo 2', 'd2', lista(cfg.g2));
+  const otras = CUENTAS.filter(c => !usadas.has(c.nombre));
+  if (otras.length) html += `<section class="grp"><div class="grp-h"><span class="dot d3"></span>Otras cuentas<small>${otras.length}</small></div><div class="grid">${otras.map(tarjeta).join('')}</div></section>`;
+  $('cuentas').innerHTML = html || '<div class="panel empty">No hay cuentas.</div>';
+  setTimeout(() => document.querySelectorAll('.acc.flash').forEach(e => e.classList.remove('flash')), 15000);
+
+  $('feed').innerHTML = clientes.length ? clientes.slice(0, 20).map(m => fila(m, true)).join('') : '<tr><td colspan="4" class="empty">Sin ingresos de clientes</td></tr>';
+  $('propios').innerHTML = propios.length ? propios.slice(0, 12).map(m => `<tr class="fm"><td class="t">${fCorta(m.fecha)}<small>${m.hora}</small></td><td><div class="who">${esc(m.ordenante || '—')}</div><small>${esc(m.cuenta)} · ${esc(m.desc)}</small></td><td class="amt">${fmt(m.monto)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">Sin movimientos FM</td></tr>';
 }
-function fila(i){
-  const nuevo = nuevosVistos.includes(i.banco+'|'+i.fila);
-  return `<tr class="${i.propio?'propio':''}"><td style="white-space:nowrap">${fFecha(i.fecha)}</td><td>${esc(i.banco)} ${nuevo?'<span class="tag">Nuevo</span>':''}</td>
-    <td class="hide-m">${esc(i.concepto)||'—'} ${i.propio?'<span class="tag fm">Propio FM</span>':''}</td>
-    <td class="n ${i.propio?'':'pos'}">${i.propio ? '<s>'+fmt(i.monto)+'</s>' : '+'+fmt(i.monto)}</td></tr>`;
+function tarjeta(c){
+  const hoy = new Date(), cli = c.ingresos.filter(m => !m.propio), hoyC = cli.filter(m => mismoDia(m.fecha, hoy)), u = c.ultIng;
+  const nuevo = c.ingresos.some(m => !m.propio && esNuevo(m));
+  return `<div class="acc ${c.flash ? 'flash' : ''}" data-cuenta="${esc(c.nombre)}" tabindex="0" role="button">
+    <div class="nm"><span>${esc(c.nombre)}</span>${!c.valido ? '<span class="tag w">Revisar</span>' : nuevo ? '<span class="tag">Nuevo ingreso</span>' : ''}</div>
+    <div class="sd" style="${c.saldo < 0 ? 'color:var(--rd)' : ''}">${c.valido ? fmt(c.saldo) : 'Sin saldo'}</div>
+    ${spark(c)}
+    <div class="ft">
+      <span>Hoy: <span class="g">+${fmt(hoyC.reduce((s, m) => s + m.monto, 0))}</span> · ${hoyC.length} ingreso${hoyC.length === 1 ? '' : 's'}</span>
+      <span>${u ? `Último: <b>${esc(u.ordenante || 'Sin ordenante')}</b> · ${fmt(u.monto)} · ${fCorta(u.fecha)}` : 'Sin ingresos de clientes'}</span>
+    </div></div>`;
+}
+function fila(m, conCuenta){
+  return `<tr class="${m.propio ? 'fm' : ''}"><td class="t">${fCorta(m.fecha)}<small>${m.hora || ''}</small></td>
+    <td><div class="who">${esc(m.ordenante || 'Sin ordenante')} ${esNuevo(m) ? '<span class="tag">Nuevo</span>' : ''}${m.propio ? ' <span class="tag fm">Propio FM</span>' : ''}</div><small>${esc(m.desc || 'sin concepto')}${m.bancoCp ? ' · ' + esc(m.bancoCp) : ''}</small></td>
+    ${conCuenta ? `<td class="hide-m"><span class="chip">${esc(m.cuenta)}</span></td>` : `<td class="hide-m"><small>${esc(m.ref || '—')}</small><small>${esc(m.rastreo)}</small></td>`}
+    <td class="amt">${m.propio ? '<s>' + fmt(m.monto) + '</s>' : '+' + fmt(m.monto)}</td></tr>`;
 }
 
-// ---------- Detalle al dar clic ----------
-function detalle(titulo, movs){
-  const cl = movs.filter(i => !i.propio).length;
-  $('detT').textContent = '📥 Ingresos · ' + titulo;
-  $('detB').innerHTML = `<div class="meta">${cl} ingreso${cl===1?'':'s'} de clientes · ${movs.length-cl} movimiento${movs.length-cl===1?'':'s'} propio${movs.length-cl===1?'':'s'} FM <span class="hint">(no cuentan como ingreso)</span></div>`
-    + (movs.length ? `<table><thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead><tbody>${movs.map(fila).join('')}</tbody></table>`
-                   : '<div class="empty">No se encontraron ingresos.</div>');
-  $('det').showModal();
+// ---------- detalle de una cuenta ----------
+function abrirDetalle(nombre){
+  const c = CUENTAS.find(x => x.nombre === nombre); if (!c) return;
+  actual = nombre;
+  const cli = c.ingresos.filter(m => !m.propio), fm = c.ingresos.length - cli.length;
+  $('detT').textContent = c.nombre;
+  $('detS').textContent = c.valido ? 'Saldo actual ' + fmt(c.saldo) : 'Sin saldo detectado';
+  $('detStats').innerHTML = `<div class="st"><small>Ingresos de clientes</small><b style="color:var(--gr)">${cli.length}</b></div>
+    <div class="st"><small>Movimientos FM</small><b style="color:var(--vi)">${fm}</b></div>
+    <div class="st"><small>Último ingreso</small><b>${c.ultIng ? fCorta(c.ultIng.fecha) : '—'}</b></div>`;
+  if (!$('det').open) $('det').showModal();
+  chart('fDet', porDia(cli, 30), 'bar', '#34d399');
+  listaDetalle();
 }
-function abrirDetalle(el){
-  if (el.dataset.emp) detalle(el.dataset.emp, ultimosIng.filter(i => coincide(el.dataset.emp, i)));
-  else if (el.dataset.banco) detalle(el.dataset.banco, ultimosIng.filter(i => i.banco === el.dataset.banco));
+function listaDetalle(){
+  const c = CUENTAS.find(x => x.nombre === actual); if (!c) return;
+  const q = norm($('detQ').value), conFM = $('detFM').checked;
+  const ms = c.ingresos.filter(m => (conFM || !m.propio) && (!q || norm([m.ordenante, m.desc, m.ref, m.rastreo, m.bancoCp].join(' ')).includes(q))).slice().reverse();
+  $('detTb').innerHTML = ms.length ? ms.map(m => fila(m, false)).join('') : '<tr><td colspan="4" class="empty">Sin resultados</td></tr>';
 }
-document.addEventListener('click', e => { const el = e.target.closest('[data-emp],[data-banco]'); if (el) abrirDetalle(el); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter'){ const el = e.target.closest && e.target.closest('[data-emp],[data-banco]'); if (el) abrirDetalle(el); } });
-$('detC').onclick = () => $('det').close();
+$('detQ').oninput = listaDetalle; $('detFM').onchange = listaDetalle;
+$('detC').onclick = () => { $('det').close(); actual = null; };
+$('det').addEventListener('close', () => actual = null);
+document.addEventListener('click', e => { const el = e.target.closest('[data-cuenta]'); if (el){ $('detQ').value = ''; abrirDetalle(el.dataset.cuenta); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.cuenta){ $('detQ').value = ''; abrirDetalle(e.target.dataset.cuenta); } });
 
-// ---------- Avisos ----------
-function beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime+.6); o.start(); o.stop(a.currentTime+.6) }catch(e){} }
-let titulo = document.title, pend = 0;
+// ---------- avisos ----------
+function beep(){ try{ const a = new (window.AudioContext || window.webkitAudioContext)(); [880, 1320].forEach((f, i) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = f; const t = a.currentTime + i * .14; g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t + .35); o.start(t); o.stop(t + .35); }); }catch(e){} }
+const titulo = document.title; let pend = 0;
 function notificar(t, cuerpo){
-  const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${esc(t)}</b>${esc(cuerpo)}`;
+  const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${esc(t)}</b><span>${esc(cuerpo)}</span>`;
   $('toasts').appendChild(el); setTimeout(() => el.remove(), 15000);
   beep();
   if (document.hidden){ pend++; document.title = `(${pend}) Nuevo ingreso`; }
   try{ if ('Notification' in window && Notification.permission === 'granted') new Notification(t, {body: cuerpo, tag: t + cuerpo}); }catch(e){}
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden){ pend = 0; document.title = titulo; } });
-function estadoNot(){
-  const p = 'Notification' in window ? Notification.permission : 'na';
-  $('bNot').textContent = p === 'granted' ? '🔔 Avisos activos' : p === 'denied' ? '🔕 Avisos bloqueados' : '🔔 Activar avisos';
-}
+const estadoNot = () => $('bNot').classList.toggle('on', 'Notification' in window && Notification.permission === 'granted');
 $('bNot').onclick = async () => {
-  if (!('Notification' in window)) return notificar('Este navegador no permite avisos', 'Seguirás viendo los avisos dentro de la página.');
+  if (!('Notification' in window)) return notificar('Avisos no disponibles', 'Este navegador no permite notificaciones; verás los avisos dentro de la página.');
   if (Notification.permission === 'default') await Notification.requestPermission();
   estadoNot();
-  if (Notification.permission === 'granted') notificar('🔔 Avisos activados', 'Te avisaré cuando entre un nuevo ingreso.');
-  else if (Notification.permission === 'denied') notificar('Avisos bloqueados', 'Permítelos desde el candado de la barra de direcciones.');
+  if (Notification.permission === 'granted') notificar('Avisos activados', 'Te avisaré cuando entre un ingreso de clientes.');
+  else notificar('Avisos bloqueados', 'Permítelos desde el candado de la barra de direcciones.');
 };
 
-// ---------- Configuración ----------
+// ---------- configuración ----------
 function abrirCfg(){ $('cUrl').value = cfg.url; $('cTok').value = cfg.token; $('cMin').value = cfg.min; $('cIgn').value = cfg.ignorar; $('cG1').value = cfg.g1; $('cG2').value = cfg.g2; $('dlg').showModal(); }
 $('bCfg').onclick = abrirCfg;
 $('bCan').onclick = () => $('dlg').close();
@@ -386,17 +544,19 @@ $('fCfg').onsubmit = e => {
   e.preventDefault();
   const url = $('cUrl').value.trim();
   if (url !== cfg.url || cfg.demo){ estadoPrev = null; nuevosVistos = []; }
-  cfg = {url, token:$('cTok').value.trim(), min: Math.max(1, +$('cMin').value || 30), ignorar:$('cIgn').value, g1:$('cG1').value, g2:$('cG2').value, demo:false};
-  store.set('cfg', cfg); $('dlg').close(); cargar(true);
+  cfg = {url, token: $('cTok').value.trim(), min: Math.max(1, +$('cMin').value || 30), ignorar: $('cIgn').value, g1: $('cG1').value, g2: $('cG2').value, demo: false};
+  store.set('cfg', cfg); $('dlg').close(); cargar();
 };
-$('bDemo').onclick = () => { cfg.demo = true; estadoPrev = null; nuevosVistos = []; demo = null; $('dlg').close(); cargar(true); };
-$('bRef').onclick = () => cargar(true);
+$('bDemo').onclick = () => { cfg.demo = true; estadoPrev = null; nuevosVistos = []; demo = null; $('dlg').close(); cargar(); };
+$('bRef').onclick = () => cargar();
 
-// ---------- Reloj de actualización ----------
+// ---------- reloj ----------
 setInterval(() => {
-  const r = siguiente - Date.now();
-  if (siguiente && r <= 0) { cargar(); return; }
-  if (siguiente){ const m = Math.floor(r/60000), s = Math.floor(r%60000/1000); $('prox').textContent = `Próxima en ${m}:${String(s).padStart(2,'0')}`; }
+  if (!siguiente) return;
+  const r = siguiente - Date.now(), tot = Math.max(1, +cfg.min || 30) * 60000;
+  if (r <= 0){ cargar(); return; }
+  $('prox').textContent = `${pad(Math.floor(r / 60000))}:${pad(Math.floor(r % 60000 / 1000))}`;
+  $('arc').style.strokeDashoffset = (94.25 * (1 - r / tot)).toFixed(2);
 }, 1000);
 
 estadoNot();
