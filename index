@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de Saldos</title>
+<style>
+:root{--navy:#14213d;--navy2:#1f3160;--bg:#eef2f8;--card:#fff;--ink:#1c2436;--muted:#5d6782;--violet:#6d4aff;--violet2:#5536e0;--amber:#c27c0e;--green:#13915f;--red:#c63d3d;--line:#e1e6f0}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px max(4vw,16px);display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px #0003}
+header h1{margin:0;font-size:24px;font-weight:700}
+header .sub{font-size:14px;color:#b9c4e0}
+.acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:0;border-radius:10px;padding:11px 18px;font:600 15px inherit;font-family:inherit;cursor:pointer;min-height:44px;background:var(--violet);color:#fff;transition:background .15s}
+.btn:hover{background:var(--violet2)}.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:var(--navy2);color:#fff}.btn.ghost:hover{background:#2b4080}
+.btn.light{background:#ece8ff;color:var(--violet2)}
+.btn:focus-visible,input:focus-visible{outline:3px solid #a993ff;outline-offset:2px}
+.pill{background:var(--navy2);border-radius:999px;padding:8px 14px;font-size:14px;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:28px max(4vw,16px) 60px}
+h2{font-size:21px;margin:34px 0 14px}
+.card{background:var(--card);border-radius:16px;padding:22px 24px;box-shadow:0 2px 8px #14213d12}
+.hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:18px}
+.k-l{color:var(--muted);font-size:15px}
+.k-v{font-size:clamp(30px,4.5vw,46px);font-weight:700;line-height:1.1;margin-top:6px;white-space:nowrap}
+.k-s{font-size:22px}
+.k-n{color:var(--muted);font-size:14px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.bank{position:relative;transition:box-shadow .3s}
+.bank h3{margin:0;font-size:19px;display:flex;justify-content:space-between;gap:8px}
+.bank .saldo{font-size:30px;font-weight:700;margin:10px 0 4px;white-space:nowrap}
+.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--violet);border-radius:9px}
+.meta{font-size:14px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.bank.flash{box-shadow:0 0 0 3px var(--green),0 4px 18px #13915f40}
+.tag{font-size:12px;font-weight:700;background:#dff5ea;color:var(--green);border-radius:6px;padding:2px 8px;white-space:nowrap;align-self:center}
+.tag.warn{background:#fff2dc;color:var(--amber)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;color:var(--muted);font-weight:600;border-bottom:2px solid var(--line);padding:10px 8px}
+td{padding:11px 8px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;white-space:nowrap}
+.pos{color:var(--green);font-weight:600}
+.empty{color:var(--muted);text-align:center;padding:26px}
+.hint{color:var(--amber);font-size:14px;font-weight:500}
+.banner{background:#fff2dc;border-left:5px solid var(--amber);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:15px}
+.banner.err{background:#fde8e8;border-color:var(--red)}
+dialog{border:0;border-radius:18px;padding:0;width:min(560px,94vw);box-shadow:0 20px 60px #0005}
+dialog::backdrop{background:#14213d99}
+.dh{background:var(--navy);color:#fff;padding:18px 24px;font-size:19px;font-weight:700}
+.db{padding:22px 24px;display:grid;gap:16px}
+label{font-weight:600;font-size:15px;display:block;margin-bottom:6px}
+input{width:100%;font:16px inherit;font-family:inherit;padding:11px 13px;border:1.5px solid #cdd5e4;border-radius:10px}
+.df{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:0 24px 22px}
+#toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:20;max-width:min(380px,92vw)}
+.toast{background:var(--navy);color:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 8px 24px #0004;border-left:6px solid var(--green);animation:in .3s ease}
+.toast b{display:block;font-size:16px}
+@keyframes in{from{transform:translateY(20px);opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:820px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero .card:first-child{grid-column:1/-1}}
+@media(max-width:600px){header{position:static}header h1{font-size:20px}.hero{grid-template-columns:minmax(0,1fr)}table{font-size:14px}.hide-m{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🏦 Dashboard de Saldos Bancarios</h1>
+    <div class="sub" id="libro">Sin conectar</div>
+  </div>
+  <div class="acts">
+    <span class="pill" id="ultima">Última: —</span>
+    <span class="pill" id="prox">Próxima: —</span>
+    <button class="btn" id="bRef">🔄 Actualizar ahora</button>
+    <button class="btn ghost" id="bNot">🔔 Activar avisos</button>
+    <button class="btn ghost" id="bCfg" aria-label="Configuración">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <div id="msg"></div>
+
+  <section class="hero">
+    <div class="card"><div class="k-l">💰 Saldo total consolidado</div><div class="k-v" id="total">—</div><div class="k-n" id="totalN"></div></div>
+    <div class="card"><div class="k-l">📥 Ingresos de hoy</div><div class="k-v k-s" id="hoy">—</div><div class="k-n" id="hoyN"></div></div>
+    <div class="card"><div class="k-l">🏦 Bancos</div><div class="k-v k-s" id="nb">—</div><div class="k-n" id="nbN"></div></div>
+  </section>
+
+  <h2>🏦 Saldos por banco</h2>
+  <div class="grid" id="bancos"><div class="card empty">Conecta tu Google Sheet en ⚙️ Configuración o prueba con datos de ejemplo.</div></div>
+
+  <h2>📥 Últimos ingresos</h2>
+  <div class="card" style="padding:8px 14px;overflow-x:auto">
+    <table>
+      <thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead>
+      <tbody id="ingresos"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="fCfg">
+    <div class="dh">⚙️ Configuración</div>
+    <div class="db">
+      <div><label for="cUrl">URL de la API <span class="hint">(la de Apps Script que termina en /exec)</span></label><input id="cUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div><label for="cTok">Token <span class="hint">(la misma clave que pusiste en Code.gs)</span></label><input id="cTok" type="password" autocomplete="off"></div>
+      <div><label for="cMin">Actualizar cada <span class="hint">(minutos)</span></label><input id="cMin" type="number" min="1" value="30"></div>
+      <div><label for="cIgn">Pestañas a ignorar <span class="hint">(separadas por coma, ej. Resumen, Catálogo)</span></label><input id="cIgn"></div>
+    </div>
+    <div class="df">
+      <button type="button" class="btn light" id="bDemo">🧪 Usar datos de ejemplo</button>
+      <button type="button" class="btn ghost" id="bCan">Cancelar</button>
+      <button type="submit" class="btn" id="bSave">💾 Guardar y conectar</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts"></div>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('dsb_'+k); return v==null ? d : JSON.parse(v) }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem('dsb_'+k, JSON.stringify(v)) }catch(e){} }
+};
+let cfg = store.get('cfg', {url:'', token:'', min:30, ignorar:'', demo:false});
+let estadoPrev = store.get('estado', null);   // {banco:{ultFila, saldo}}
+let siguiente = 0, cargando = false, nuevosVistos = store.get('nuevos', []);
+
+const MXN = new Intl.NumberFormat('es-MX', {style:'currency', currency:'MXN'});
+const fmt = n => MXN.format(n || 0);
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function num(v){
+  if (typeof v === 'number') return v;
+  let s = String(v ?? '').trim(); if (!s) return NaN;
+  const neg = /^\(.*\)$/.test(s) || /^-/.test(s.replace(/[$\s]/g,''));
+  s = s.replace(/[^0-9.,]/g,'');
+  if (/,\d{1,2}$/.test(s) && !/\.\d{1,2}$/.test(s)) s = s.replace(/\./g,'').replace(',', '.'); else s = s.replace(/,/g,'');
+  const n = parseFloat(s); return isNaN(n) ? NaN : (neg ? -n : n);
+}
+function fecha(v){
+  if (!v) return null;
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return new Date(v);
+  const m = String(v).match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (m) return new Date(+(m[3].length===2?'20'+m[3]:m[3]), m[2]-1, +m[1]);
+  return null;
+}
+const fFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const mismoDia = (a,b) => a && a.toDateString() === b.toDateString();
+
+// ---------- Lectura flexible de cada pestaña ----------
+const PAT = {
+  saldo:/saldo/, ingreso:/ingreso|abono|deposito|entrada|credito|haber/, egreso:/egreso|cargo|retiro|salida|debito|debe|pago/,
+  monto:/^(monto|importe|cantidad)/, fecha:/fecha|dia/, concepto:/concepto|descripcion|detalle|referencia|movimiento|cliente/
+};
+function analizar(nombre, filas){
+  let h = -1, col = {};
+  for (let i = 0; i < Math.min(filas.length, 15); i++){
+    const c = {};
+    filas[i].forEach((x, j) => { const t = norm(x); if (!t || t.length > 40) return;
+      for (const k in PAT) if (c[k] == null && PAT[k].test(t) && !(k==='ingreso' && /saldo/.test(t))) { c[k] = j; break; } });
+    if (c.saldo != null || c.ingreso != null || c.monto != null){ h = i; col = c; break; }
+  }
+  const datos = h < 0 ? [] : filas.slice(h+1).map((r,i)=>({r, fila:h+2+i})).filter(o => o.r.some(x => String(x).trim() !== ''));
+  let saldo = NaN, ingresos = [], ultimo = null;
+  datos.forEach(({r, fila}) => {
+    let mi = col.ingreso != null ? num(r[col.ingreso]) : NaN;
+    if (col.ingreso == null && col.monto != null){ const m = num(r[col.monto]); if (m > 0) mi = m; }
+    const me = col.egreso != null ? num(r[col.egreso]) : NaN;
+    const f = col.fecha != null ? fecha(r[col.fecha]) : null;
+    const concepto = col.concepto != null ? r[col.concepto] : '';
+    if (col.saldo != null && isFinite(num(r[col.saldo]))) saldo = num(r[col.saldo]);
+    if (mi > 0) ingresos.push({banco:nombre, fila, monto:mi, fecha:f, concepto});
+    if (mi > 0 || me > 0) ultimo = {tipo: mi > 0 ? 'Ingreso' : 'Egreso', monto: mi > 0 ? mi : me, fecha:f};
+  });
+  if (!isFinite(saldo) && col.saldo == null){
+    if (col.ingreso != null || col.monto != null) saldo = datos.reduce((s,{r}) => s + (col.ingreso!=null ? (num(r[col.ingreso])||0) - (col.egreso!=null ? num(r[col.egreso])||0 : 0) : (num(r[col.monto])||0)), 0);
+    else for (const r of filas) { const j = r.findIndex(x => /saldo/.test(norm(x))); if (j >= 0){ const v = r.slice(j+1).map(num).find(isFinite); if (v != null){ saldo = v; break; } } }
+  }
+  return {nombre, saldo, ingresos, ultimo, ultFila: datos.length ? datos[datos.length-1].fila : 0, valido: isFinite(saldo), sinIngresos: col.ingreso == null && col.monto == null};
+}
+
+// ---------- Datos de ejemplo ----------
+let demo = null;
+function datosDemo(){
+  if (!demo){
+    const hoy = new Date(), d = n => { const x = new Date(hoy); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10)+'T10:00:00' };
+    const mk = (s0, movs) => { let s = s0; const f = [['Fecha','Concepto','Ingreso','Egreso','Saldo']]; movs.forEach(([dd,c,i,e]) => { s += i - e; f.push([d(dd),c,i||'',e||'',s]) }); return f };
+    demo = [
+      {nombre:'BBVA', filas: mk(420000, [[3,'Pago cliente Forehuman',85000,0],[2,'Nómina',0,120000],[1,'Transferencia SPEI',46500,0],[0,'Pago proveedor',0,18200]])},
+      {nombre:'Banorte', filas: mk(185000, [[4,'Depósito',32000,0],[2,'Comisión',0,350],[0,'Cobro factura A-1042',57800,0]])},
+      {nombre:'Santander', filas: mk(96000, [[5,'Renta oficina',0,28000],[1,'Abono cliente',15400,0]])},
+      {nombre:'Banregio', filas: mk(310500, [[2,'Pago impuestos',0,64000],[0,'Ingreso por servicios',92300,0]])}
+    ];
+  } else if (Math.random() < .7){
+    const b = demo[Math.floor(Math.random()*demo.length)], u = b.filas[b.filas.length-1], m = Math.round(5000 + Math.random()*60000);
+    b.filas.push([new Date().toISOString().slice(0,19), 'Nuevo depósito de prueba', m, '', u[4] + m]);
+  }
+  return {libro:'Ejemplo (datos ficticios)', bancas: JSON.parse(JSON.stringify(demo))};
+}
+
+// ---------- Carga ----------
+async function cargar(manual){
+  if (cargando) return; cargando = true; $('bRef').disabled = true; $('bRef').textContent = '⏳ Actualizando…';
+  try{
+    let data;
+    if (cfg.demo) data = datosDemo();
+    else {
+      if (!cfg.url) { aviso('Falta conectar tu Google Sheet. Abre ⚙️ Configuración.'); return; }
+      const r = await fetch(cfg.url + (cfg.url.includes('?')?'&':'?') + 'token=' + encodeURIComponent(cfg.token) + '&t=' + Date.now());
+      data = await r.json();
+      if (data.error) throw new Error(data.error);
+    }
+    const ign = cfg.ignorar.split(',').map(norm).filter(Boolean);
+    const bancos = data.bancas.filter(b => !ign.includes(norm(b.nombre))).map(b => analizar(b.nombre, b.filas));
+    detectarNuevos(bancos);
+    pintar(bancos, data.libro);
+    $('msg').innerHTML = cfg.demo ? '<div class="banner">🧪 Estás viendo <b>datos de ejemplo</b>. Cada actualización puede simular un ingreso nuevo para que veas el aviso.</div>' : '';
+    $('ultima').textContent = 'Última: ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  } catch(e){
+    aviso('No se pudo leer el Sheet: ' + esc(e.message) + '. Revisa la URL, el token y que la implementación tenga acceso “Cualquier usuario”.', true);
+  } finally {
+    cargando = false; $('bRef').disabled = false; $('bRef').textContent = '🔄 Actualizar ahora';
+    siguiente = Date.now() + Math.max(1, +cfg.min || 30) * 60000;
+  }
+}
+function aviso(t, err){ $('msg').innerHTML = `<div class="banner ${err?'err':''}">${t}</div>` }
+
+function detectarNuevos(bancos){
+  const nuevo = {};
+  bancos.forEach(b => {
+    nuevo[b.nombre] = {ultFila: b.ultFila, saldo: b.saldo};
+    const p = estadoPrev && estadoPrev[b.nombre];
+    if (!p) return;                       // primera vez: no avisar
+    const nuevos = b.ingresos.filter(i => i.fila > p.ultFila);
+    nuevos.forEach(i => { notificar(`💵 Nuevo ingreso en ${b.nombre}`, `${fmt(i.monto)}${i.concepto ? ' · ' + i.concepto : ''}`); nuevosVistos.push(b.nombre+'|'+i.fila); });
+    if (b.sinIngresos && isFinite(p.saldo) && b.saldo > p.saldo) notificar(`📈 Subió el saldo de ${b.nombre}`, `+${fmt(b.saldo - p.saldo)} · ahora ${fmt(b.saldo)}`);
+    if (nuevos.length || (b.sinIngresos && b.saldo > p.saldo)) b.flash = true;
+  });
+  estadoPrev = nuevo; store.set('estado', nuevo);
+  nuevosVistos = nuevosVistos.slice(-30); store.set('nuevos', nuevosVistos);
+}
+
+function pintar(bancos, libro){
+  const ok = bancos.filter(b => b.valido), malos = bancos.filter(b => !b.valido);
+  const total = ok.reduce((s,b) => s + b.saldo, 0), hoy = new Date();
+  const todos = ok.flatMap(b => b.ingresos), deHoy = todos.filter(i => mismoDia(i.fecha, hoy));
+  $('libro').textContent = libro || 'Google Sheet';
+  $('total').textContent = fmt(total);
+  $('totalN').textContent = `Suma de ${ok.length} banco${ok.length===1?'':'s'}`;
+  $('hoy').textContent = fmt(deHoy.reduce((s,i) => s + i.monto, 0));
+  $('hoyN').textContent = `${deHoy.length} movimiento${deHoy.length===1?'':'s'} de ingreso`;
+  $('nb').textContent = ok.length;
+  $('nbN').textContent = malos.length ? `${malos.length} pestaña(s) sin columna de saldo` : 'Todas las pestañas leídas';
+  const max = Math.max(...ok.map(b => Math.abs(b.saldo)), 1);
+  $('bancos').innerHTML = ok.length ? ok.sort((a,b) => b.saldo - a.saldo).map(b => `
+    <div class="card bank ${b.flash?'flash':''}">
+      <h3><span>${esc(b.nombre)}</span>${b.flash?'<span class="tag">Nuevo ingreso</span>':''}</h3>
+      <div class="saldo" style="color:${b.saldo<0?'var(--red)':'inherit'}">${fmt(b.saldo)}</div>
+      <div class="meta">${total ? (b.saldo/total*100).toFixed(1) : 0}% del total</div>
+      <div class="bar"><i style="width:${Math.max(2, Math.abs(b.saldo)/max*100)}%"></i></div>
+      <div class="meta">${b.ultimo ? `Último movimiento: <b>${b.ultimo.tipo} ${fmt(b.ultimo.monto)}</b> · ${fFecha(b.ultimo.fecha)}` : 'Sin movimientos detectados'}</div>
+    </div>`).join('') + malos.map(b => `<div class="card bank"><h3><span>${esc(b.nombre)}</span><span class="tag warn">Revisar</span></h3><div class="meta" style="margin-top:10px">No encontré una columna o celda llamada “Saldo”. Agrégala o ignora esta pestaña en ⚙️.</div></div>`).join('')
+    : '<div class="card empty">No se encontraron bancos con saldo.</div>';
+  setTimeout(() => document.querySelectorAll('.bank.flash').forEach(e => e.classList.remove('flash')), 12000);
+  const ult = todos.sort((a,b) => (b.fecha||0) - (a.fecha||0) || b.fila - a.fila).slice(0, 15);
+  $('ingresos').innerHTML = ult.length ? ult.map(i => `<tr><td style="white-space:nowrap">${fFecha(i.fecha)}</td><td>${esc(i.banco)} ${nuevosVistos.includes(i.banco+'|'+i.fila)?'<span class="tag">Nuevo</span>':''}</td><td class="hide-m">${esc(i.concepto)||'—'}</td><td class="n pos">+${fmt(i.monto)}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="empty">No hay columna de ingresos/abonos en las pestañas</td></tr>';
+}
+
+// ---------- Avisos ----------
+function beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime+.6); o.start(); o.stop(a.currentTime+.6) }catch(e){} }
+let titulo = document.title, pend = 0;
+function notificar(t, cuerpo){
+  const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${esc(t)}</b>${esc(cuerpo)}`;
+  $('toasts').appendChild(el); setTimeout(() => el.remove(), 15000);
+  beep();
+  if (document.hidden){ pend++; document.title = `(${pend}) Nuevo ingreso`; }
+  try{ if ('Notification' in window && Notification.permission === 'granted') new Notification(t, {body: cuerpo, tag: t + cuerpo}); }catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ pend = 0; document.title = titulo; } });
+function estadoNot(){
+  const p = 'Notification' in window ? Notification.permission : 'na';
+  $('bNot').textContent = p === 'granted' ? '🔔 Avisos activos' : p === 'denied' ? '🔕 Avisos bloqueados' : '🔔 Activar avisos';
+}
+$('bNot').onclick = async () => {
+  if (!('Notification' in window)) return notificar('Este navegador no permite avisos', 'Seguirás viendo los avisos dentro de la página.');
+  if (Notification.permission === 'default') await Notification.requestPermission();
+  estadoNot();
+  if (Notification.permission === 'granted') notificar('🔔 Avisos activados', 'Te avisaré cuando entre un nuevo ingreso.');
+  else if (Notification.permission === 'denied') notificar('Avisos bloqueados', 'Permítelos desde el candado de la barra de direcciones.');
+};
+
+// ---------- Configuración ----------
+function abrirCfg(){ $('cUrl').value = cfg.url; $('cTok').value = cfg.token; $('cMin').value = cfg.min; $('cIgn').value = cfg.ignorar; $('dlg').showModal(); }
+$('bCfg').onclick = abrirCfg;
+$('bCan').onclick = () => $('dlg').close();
+$('fCfg').onsubmit = e => {
+  e.preventDefault();
+  const url = $('cUrl').value.trim();
+  if (url !== cfg.url || cfg.demo){ estadoPrev = null; nuevosVistos = []; }
+  cfg = {url, token:$('cTok').value.trim(), min: Math.max(1, +$('cMin').value || 30), ignorar:$('cIgn').value, demo:false};
+  store.set('cfg', cfg); $('dlg').close(); cargar(true);
+};
+$('bDemo').onclick = () => { cfg.demo = true; estadoPrev = null; nuevosVistos = []; demo = null; $('dlg').close(); cargar(true); };
+$('bRef').onclick = () => cargar(true);
+
+// ---------- Reloj de actualización ----------
+setInterval(() => {
+  const r = siguiente - Date.now();
+  if (siguiente && r <= 0) { cargar(); return; }
+  if (siguiente){ const m = Math.floor(r/60000), s = Math.floor(r%60000/1000); $('prox').textContent = `Próxima en ${m}:${String(s).padStart(2,'0')}`; }
+}, 1000);
+
+estadoNot();
+if (cfg.url || cfg.demo) cargar(); else abrirCfg();
+}
+</script>
+</body>
+</html>
