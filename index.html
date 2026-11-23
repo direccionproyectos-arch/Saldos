@@ -56,6 +56,13 @@ input{width:100%;font:16px inherit;font-family:inherit;padding:11px 13px;border:
 #toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:20;max-width:min(380px,92vw)}
 .toast{background:var(--navy);color:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 8px 24px #0004;border-left:6px solid var(--green);animation:in .3s ease}
 .toast b{display:block;font-size:16px}
+.clic{cursor:pointer}.clic:hover{box-shadow:0 6px 20px #6d4aff2e}
+.ver{color:var(--violet2);font-weight:600;font-size:14px;margin-top:10px}
+.grp{margin-bottom:24px}.grp-t{font-size:17px;font-weight:700;color:var(--navy2);margin:0 0 12px}
+.cnt{font-size:24px;font-weight:700;margin:8px 0 4px}
+tr.propio td{color:var(--muted)}tr.propio s{color:var(--muted)}
+.tag.fm{background:#ece8ff;color:var(--violet2)}
+#det{width:min(860px,96vw)}#detB{max-height:65vh;overflow:auto}
 @keyframes in{from{transform:translateY(20px);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media(max-width:820px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero .card:first-child{grid-column:1/-1}}
@@ -89,14 +96,31 @@ input{width:100%;font:16px inherit;font-family:inherit;padding:11px 13px;border:
   <h2>🏦 Saldos por banco</h2>
   <div class="grid" id="bancos"><div class="card empty">Conecta tu Google Sheet en ⚙️ Configuración o prueba con datos de ejemplo.</div></div>
 
-  <h2>📥 Últimos ingresos</h2>
+  <h2>🏢 Empresas <span class="hint">(clic en cada una para ver sus ingresos)</span></h2>
+  <div id="empresas"></div>
+
+  <h2>📥 Últimos ingresos de clientes</h2>
   <div class="card" style="padding:8px 14px;overflow-x:auto">
     <table>
       <thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead>
       <tbody id="ingresos"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody>
     </table>
   </div>
+
+  <h2>🔁 Movimientos propios <span class="hint">(concepto con FM, no cuentan como ingreso)</span></h2>
+  <div class="card" style="padding:8px 14px;overflow-x:auto">
+    <table>
+      <thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead>
+      <tbody id="propios"><tr><td colspan="4" class="empty">Sin datos todavía</td></tr></tbody>
+    </table>
+  </div>
 </main>
+
+<dialog id="det">
+  <div class="dh" id="detT"></div>
+  <div class="db" id="detB"></div>
+  <div class="df"><button class="btn" id="detC">Cerrar</button></div>
+</dialog>
 
 <dialog id="dlg">
   <form method="dialog" id="fCfg">
@@ -105,6 +129,8 @@ input{width:100%;font:16px inherit;font-family:inherit;padding:11px 13px;border:
       <div><label for="cUrl">URL de la API <span class="hint">(la de Apps Script que termina en /exec)</span></label><input id="cUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
       <div><label for="cTok">Token <span class="hint">(la misma clave que pusiste en Code.gs)</span></label><input id="cTok" type="password" autocomplete="off"></div>
       <div><label for="cMin">Actualizar cada <span class="hint">(minutos)</span></label><input id="cMin" type="number" min="1" value="30"></div>
+      <div><label for="cG1">Empresas grupo 1 <span class="hint">(separadas por coma)</span></label><input id="cG1"></div>
+      <div><label for="cG2">Empresas grupo 2 <span class="hint">(separadas por coma)</span></label><input id="cG2"></div>
       <div><label for="cIgn">Pestañas a ignorar <span class="hint">(separadas por coma, ej. Resumen, Catálogo)</span></label><input id="cIgn"></div>
     </div>
     <div class="df">
@@ -124,7 +150,10 @@ const store = {
   get(k, d){ try{ const v = localStorage.getItem('dsb_'+k); return v==null ? d : JSON.parse(v) }catch(e){ return d } },
   set(k, v){ try{ localStorage.setItem('dsb_'+k, JSON.stringify(v)) }catch(e){} }
 };
-let cfg = store.get('cfg', {url:'', token:'', min:30, ignorar:'', demo:false});
+let cfg = Object.assign({url:'', token:'', min:30, ignorar:'', demo:false,
+  g1:'EQUITED, KUBERGANYA, GRAVANTA, BESTEN, NORDELTA, HANGREVERS, NIGRI',
+  g2:'Zentigro, Food max, Qaersors, Samury, Trouapou'}, store.get('cfg', {}));
+let ultimosIng = [], ultimosBancos = [];
 let estadoPrev = store.get('estado', null);   // {banco:{ultFila, saldo}}
 let siguiente = 0, cargando = false, nuevosVistos = store.get('nuevos', []);
 
@@ -149,6 +178,13 @@ function fecha(v){
 }
 const fFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 const mismoDia = (a,b) => a && a.toDateString() === b.toDateString();
+const clave = s => norm(s).replace(/[^a-z0-9]/g,'');
+const lista = s => String(s||'').split(',').map(x => x.trim()).filter(Boolean);
+const empresas = () => [...lista(cfg.g1), ...lista(cfg.g2)];
+// Una empresa "coincide" si su nombre aparece en el nombre de la pestaña o en el concepto
+const coincide = (emp, i) => (clave(i.banco) + '|' + clave(i.concepto)).includes(clave(emp));
+const esPropio = concepto => /fm/i.test(String(concepto ?? ''));
+const ord = (a,b) => (b.fecha||0) - (a.fecha||0) || b.fila - a.fila;
 
 // ---------- Lectura flexible de cada pestaña ----------
 const PAT = {
@@ -172,7 +208,7 @@ function analizar(nombre, filas){
     const f = col.fecha != null ? fecha(r[col.fecha]) : null;
     const concepto = col.concepto != null ? r[col.concepto] : '';
     if (col.saldo != null && isFinite(num(r[col.saldo]))) saldo = num(r[col.saldo]);
-    if (mi > 0) ingresos.push({banco:nombre, fila, monto:mi, fecha:f, concepto});
+    if (mi > 0) ingresos.push({banco:nombre, fila, monto:mi, fecha:f, concepto, propio: esPropio(concepto)});
     if (mi > 0 || me > 0) ultimo = {tipo: mi > 0 ? 'Ingreso' : 'Egreso', monto: mi > 0 ? mi : me, fecha:f};
   });
   if (!isFinite(saldo) && col.saldo == null){
@@ -189,14 +225,15 @@ function datosDemo(){
     const hoy = new Date(), d = n => { const x = new Date(hoy); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10)+'T10:00:00' };
     const mk = (s0, movs) => { let s = s0; const f = [['Fecha','Concepto','Ingreso','Egreso','Saldo']]; movs.forEach(([dd,c,i,e]) => { s += i - e; f.push([d(dd),c,i||'',e||'',s]) }); return f };
     demo = [
-      {nombre:'BBVA', filas: mk(420000, [[3,'Pago cliente Forehuman',85000,0],[2,'Nómina',0,120000],[1,'Transferencia SPEI',46500,0],[0,'Pago proveedor',0,18200]])},
-      {nombre:'Banorte', filas: mk(185000, [[4,'Depósito',32000,0],[2,'Comisión',0,350],[0,'Cobro factura A-1042',57800,0]])},
-      {nombre:'Santander', filas: mk(96000, [[5,'Renta oficina',0,28000],[1,'Abono cliente',15400,0]])},
-      {nombre:'Banregio', filas: mk(310500, [[2,'Pago impuestos',0,64000],[0,'Ingreso por servicios',92300,0]])}
+      {nombre:'BBVA', filas: mk(420000, [[3,'SPEI EQUITED SA DE CV',85000,0],[2,'Nómina',0,120000],[1,'TRASPASO FM KUBERGANYA',46500,0],[0,'Pago proveedor',0,18200]])},
+      {nombre:'Banorte', filas: mk(185000, [[4,'Depósito GRAVANTA',32000,0],[2,'Comisión',0,350],[0,'Cobro factura ZENTIGRO',57800,0]])},
+      {nombre:'Santander', filas: mk(96000, [[5,'Renta oficina',0,28000],[2,'FM TRASPASO EQUITED',20000,0],[1,'Abono FOOD MAX',15400,0]])},
+      {nombre:'Banregio', filas: mk(310500, [[3,'SPEI NORDELTA',40000,0],[2,'Pago impuestos',0,64000],[0,'Pago servicios SAMURY',92300,0]])}
     ];
   } else if (Math.random() < .7){
+    const cs = ['SPEI EQUITED','DEPOSITO QAERSORS','TRASPASO FM BESTEN','PAGO TROUAPOU','SPEI HANGREVERS','ABONO NIGRI'];
     const b = demo[Math.floor(Math.random()*demo.length)], u = b.filas[b.filas.length-1], m = Math.round(5000 + Math.random()*60000);
-    b.filas.push([new Date().toISOString().slice(0,19), 'Nuevo depósito de prueba', m, '', u[4] + m]);
+    b.filas.push([new Date().toISOString().slice(0,19), cs[Math.floor(Math.random()*cs.length)], m, '', u[4] + m]);
   }
   return {libro:'Ejemplo (datos ficticios)', bancas: JSON.parse(JSON.stringify(demo))};
 }
@@ -234,8 +271,11 @@ function detectarNuevos(bancos){
     nuevo[b.nombre] = {ultFila: b.ultFila, saldo: b.saldo};
     const p = estadoPrev && estadoPrev[b.nombre];
     if (!p) return;                       // primera vez: no avisar
-    const nuevos = b.ingresos.filter(i => i.fila > p.ultFila);
-    nuevos.forEach(i => { notificar(`💵 Nuevo ingreso en ${b.nombre}`, `${fmt(i.monto)}${i.concepto ? ' · ' + i.concepto : ''}`); nuevosVistos.push(b.nombre+'|'+i.fila); });
+    const todosNuevos = b.ingresos.filter(i => i.fila > p.ultFila);
+    todosNuevos.forEach(i => nuevosVistos.push(b.nombre+'|'+i.fila));
+    const nuevos = todosNuevos.filter(i => !i.propio);   // los FM no avisan
+    nuevos.forEach(i => { const emp = empresas().find(e => coincide(e, i));
+      notificar(`💵 Nuevo ingreso${emp ? ' · ' + emp : ''} en ${b.nombre}`, `${fmt(i.monto)}${i.concepto ? ' · ' + i.concepto : ''}`); });
     if (b.sinIngresos && isFinite(p.saldo) && b.saldo > p.saldo) notificar(`📈 Subió el saldo de ${b.nombre}`, `+${fmt(b.saldo - p.saldo)} · ahora ${fmt(b.saldo)}`);
     if (nuevos.length || (b.sinIngresos && b.saldo > p.saldo)) b.flash = true;
   });
@@ -246,29 +286,74 @@ function detectarNuevos(bancos){
 function pintar(bancos, libro){
   const ok = bancos.filter(b => b.valido), malos = bancos.filter(b => !b.valido);
   const total = ok.reduce((s,b) => s + b.saldo, 0), hoy = new Date();
-  const todos = ok.flatMap(b => b.ingresos), deHoy = todos.filter(i => mismoDia(i.fecha, hoy));
+  const todos = bancos.flatMap(b => b.ingresos).sort(ord);
+  const clientes = todos.filter(i => !i.propio), propios = todos.filter(i => i.propio);
+  const deHoy = clientes.filter(i => mismoDia(i.fecha, hoy)), fmHoy = propios.filter(i => mismoDia(i.fecha, hoy));
+  ultimosIng = todos; ultimosBancos = ok;
   $('libro').textContent = libro || 'Google Sheet';
   $('total').textContent = fmt(total);
   $('totalN').textContent = `Suma de ${ok.length} banco${ok.length===1?'':'s'}`;
   $('hoy').textContent = fmt(deHoy.reduce((s,i) => s + i.monto, 0));
-  $('hoyN').textContent = `${deHoy.length} movimiento${deHoy.length===1?'':'s'} de ingreso`;
+  $('hoyN').textContent = `${deHoy.length} ingreso${deHoy.length===1?'':'s'} de clientes` + (fmHoy.length ? ` · ${fmHoy.length} propio${fmHoy.length===1?'':'s'} (FM) excluido${fmHoy.length===1?'':'s'}` : '');
   $('nb').textContent = ok.length;
   $('nbN').textContent = malos.length ? `${malos.length} pestaña(s) sin columna de saldo` : 'Todas las pestañas leídas';
   const max = Math.max(...ok.map(b => Math.abs(b.saldo)), 1);
   $('bancos').innerHTML = ok.length ? ok.sort((a,b) => b.saldo - a.saldo).map(b => `
-    <div class="card bank ${b.flash?'flash':''}">
+    <div class="card bank clic ${b.flash?'flash':''}" data-banco="${esc(b.nombre)}" tabindex="0">
       <h3><span>${esc(b.nombre)}</span>${b.flash?'<span class="tag">Nuevo ingreso</span>':''}</h3>
       <div class="saldo" style="color:${b.saldo<0?'var(--red)':'inherit'}">${fmt(b.saldo)}</div>
       <div class="meta">${total ? (b.saldo/total*100).toFixed(1) : 0}% del total</div>
       <div class="bar"><i style="width:${Math.max(2, Math.abs(b.saldo)/max*100)}%"></i></div>
       <div class="meta">${b.ultimo ? `Último movimiento: <b>${b.ultimo.tipo} ${fmt(b.ultimo.monto)}</b> · ${fFecha(b.ultimo.fecha)}` : 'Sin movimientos detectados'}</div>
+      <div class="ver">Ver ingresos →</div>
     </div>`).join('') + malos.map(b => `<div class="card bank"><h3><span>${esc(b.nombre)}</span><span class="tag warn">Revisar</span></h3><div class="meta" style="margin-top:10px">No encontré una columna o celda llamada “Saldo”. Agrégala o ignora esta pestaña en ⚙️.</div></div>`).join('')
     : '<div class="card empty">No se encontraron bancos con saldo.</div>';
   setTimeout(() => document.querySelectorAll('.bank.flash').forEach(e => e.classList.remove('flash')), 12000);
-  const ult = todos.sort((a,b) => (b.fecha||0) - (a.fecha||0) || b.fila - a.fila).slice(0, 15);
-  $('ingresos').innerHTML = ult.length ? ult.map(i => `<tr><td style="white-space:nowrap">${fFecha(i.fecha)}</td><td>${esc(i.banco)} ${nuevosVistos.includes(i.banco+'|'+i.fila)?'<span class="tag">Nuevo</span>':''}</td><td class="hide-m">${esc(i.concepto)||'—'}</td><td class="n pos">+${fmt(i.monto)}</td></tr>`).join('')
-    : '<tr><td colspan="4" class="empty">No hay columna de ingresos/abonos en las pestañas</td></tr>';
+  $('ingresos').innerHTML = clientes.length ? clientes.slice(0, 15).map(fila).join('')
+    : '<tr><td colspan="4" class="empty">No hay ingresos de clientes</td></tr>';
+  $('propios').innerHTML = propios.length ? propios.slice(0, 10).map(fila).join('')
+    : '<tr><td colspan="4" class="empty">No hay movimientos con FM</td></tr>';
+
+  // Empresas agrupadas (solo visual: no se suman entre sí)
+  const tarjeta = emp => {
+    const suyos = todos.filter(i => coincide(emp, i)), cl = suyos.filter(i => !i.propio), pr = suyos.length - cl.length;
+    const nuevo = cl.some(i => nuevosVistos.includes(i.banco+'|'+i.fila)), u = cl[0];
+    const cuentas = ok.filter(b => clave(b.nombre).includes(clave(emp)));
+    return `<div class="card bank clic" data-emp="${esc(emp)}" tabindex="0">
+      <h3><span>${esc(emp)}</span>${nuevo?'<span class="tag">Nuevo ingreso</span>':''}</h3>
+      <div class="cnt">${cl.length} ingreso${cl.length===1?'':'s'}</div>
+      <div class="meta">${u ? `Último: <b>${fmt(u.monto)}</b> · ${fFecha(u.fecha)} · ${esc(u.banco)}` : 'Sin ingresos de clientes'}</div>
+      ${pr ? `<div class="meta">${pr} movimiento${pr===1?'':'s'} propio${pr===1?'':'s'} (FM)</div>` : ''}
+      ${cuentas.map(b => `<div class="meta">Saldo ${esc(b.nombre)}: <b>${fmt(b.saldo)}</b></div>`).join('')}
+      <div class="ver">Ver ingresos →</div></div>`;
+  };
+  $('empresas').innerHTML = [['🟣 Grupo 1', lista(cfg.g1)], ['🔵 Grupo 2', lista(cfg.g2)]].filter(g => g[1].length)
+    .map(([t, l]) => `<div class="grp"><div class="grp-t">${t}</div><div class="grid">${l.map(tarjeta).join('')}</div></div>`).join('')
+    || '<div class="card empty">Agrega empresas en ⚙️ Configuración.</div>';
 }
+function fila(i){
+  const nuevo = nuevosVistos.includes(i.banco+'|'+i.fila);
+  return `<tr class="${i.propio?'propio':''}"><td style="white-space:nowrap">${fFecha(i.fecha)}</td><td>${esc(i.banco)} ${nuevo?'<span class="tag">Nuevo</span>':''}</td>
+    <td class="hide-m">${esc(i.concepto)||'—'} ${i.propio?'<span class="tag fm">Propio FM</span>':''}</td>
+    <td class="n ${i.propio?'':'pos'}">${i.propio ? '<s>'+fmt(i.monto)+'</s>' : '+'+fmt(i.monto)}</td></tr>`;
+}
+
+// ---------- Detalle al dar clic ----------
+function detalle(titulo, movs){
+  const cl = movs.filter(i => !i.propio).length;
+  $('detT').textContent = '📥 Ingresos · ' + titulo;
+  $('detB').innerHTML = `<div class="meta">${cl} ingreso${cl===1?'':'s'} de clientes · ${movs.length-cl} movimiento${movs.length-cl===1?'':'s'} propio${movs.length-cl===1?'':'s'} FM <span class="hint">(no cuentan como ingreso)</span></div>`
+    + (movs.length ? `<table><thead><tr><th>Fecha</th><th>Banco</th><th class="hide-m">Concepto</th><th class="n">Monto</th></tr></thead><tbody>${movs.map(fila).join('')}</tbody></table>`
+                   : '<div class="empty">No se encontraron ingresos.</div>');
+  $('det').showModal();
+}
+function abrirDetalle(el){
+  if (el.dataset.emp) detalle(el.dataset.emp, ultimosIng.filter(i => coincide(el.dataset.emp, i)));
+  else if (el.dataset.banco) detalle(el.dataset.banco, ultimosIng.filter(i => i.banco === el.dataset.banco));
+}
+document.addEventListener('click', e => { const el = e.target.closest('[data-emp],[data-banco]'); if (el) abrirDetalle(el); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter'){ const el = e.target.closest && e.target.closest('[data-emp],[data-banco]'); if (el) abrirDetalle(el); } });
+$('detC').onclick = () => $('det').close();
 
 // ---------- Avisos ----------
 function beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime+.6); o.start(); o.stop(a.currentTime+.6) }catch(e){} }
@@ -294,14 +379,14 @@ $('bNot').onclick = async () => {
 };
 
 // ---------- Configuración ----------
-function abrirCfg(){ $('cUrl').value = cfg.url; $('cTok').value = cfg.token; $('cMin').value = cfg.min; $('cIgn').value = cfg.ignorar; $('dlg').showModal(); }
+function abrirCfg(){ $('cUrl').value = cfg.url; $('cTok').value = cfg.token; $('cMin').value = cfg.min; $('cIgn').value = cfg.ignorar; $('cG1').value = cfg.g1; $('cG2').value = cfg.g2; $('dlg').showModal(); }
 $('bCfg').onclick = abrirCfg;
 $('bCan').onclick = () => $('dlg').close();
 $('fCfg').onsubmit = e => {
   e.preventDefault();
   const url = $('cUrl').value.trim();
   if (url !== cfg.url || cfg.demo){ estadoPrev = null; nuevosVistos = []; }
-  cfg = {url, token:$('cTok').value.trim(), min: Math.max(1, +$('cMin').value || 30), ignorar:$('cIgn').value, demo:false};
+  cfg = {url, token:$('cTok').value.trim(), min: Math.max(1, +$('cMin').value || 30), ignorar:$('cIgn').value, g1:$('cG1').value, g2:$('cG2').value, demo:false};
   store.set('cfg', cfg); $('dlg').close(); cargar(true);
 };
 $('bDemo').onclick = () => { cfg.demo = true; estadoPrev = null; nuevosVistos = []; demo = null; $('dlg').close(); cargar(true); };
